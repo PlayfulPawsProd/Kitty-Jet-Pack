@@ -1,3 +1,2 @@
-# Kitty-JetPack-PWA
+# Kittys-cuddle-collection
 Web APP
-https://playfulpawsprod.github.io/Kitty-JetPack-PWA/
