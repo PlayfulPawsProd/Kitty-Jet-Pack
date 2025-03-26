@@ -1,7 +1,17 @@
 html, body {
   margin: 0;
   padding: 0;
+  overflow: hidden; /* Prevent scrollbars */
+  height: 100%;
+  background-color: #000; /* Black bars if aspect ratio differs */
 }
 canvas {
   display: block;
+  width: 100%;
+  height: 100%;
+   /* Keep aspect ratio, fit within screen */
+  object-fit: contain;
+  /* Try to keep pixels sharp when scaling */
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
