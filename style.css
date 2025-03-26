@@ -1,17 +1,30 @@
 html, body {
   margin: 0;
   padding: 0;
-  overflow: hidden; /* Prevent scrollbars */
+  overflow: hidden; /* Still important */
   height: 100%;
-  background-color: #000; /* Black bars if aspect ratio differs */
+  width: 100%; /* Explicitly set width too */
+  background-color: #000;
+  display: flex; /* Use flexbox to center */
+  justify-content: center;
+  align-items: center;
 }
+
 canvas {
   display: block;
-  width: 100%;
-  height: 100%;
-   /* Keep aspect ratio, fit within screen */
-  object-fit: contain;
-  /* Try to keep pixels sharp when scaling */
+  /* Use max-width/max-height to respect aspect ratio */
+  max-width: 100vw; /* Max viewport width */
+  max-height: 100vh; /* Max viewport height */
+  width: auto;   /* Let browser calculate width based on height */
+  height: auto;  /* Let browser calculate height based on width */
+  object-fit: contain; /* Keep this! */
+  /* Pixelated rendering attempts */
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+  image-rendering: -moz-crisp-edges; /* Firefox */
+  image-rendering: -webkit-optimize-contrast; /* Older Webkit */
+  -ms-interpolation-mode: nearest-neighbor; /* IE */
 }
+
+/* Optional: Target the defaultCanvas0 specifically if needed */
+/* #defaultCanvas0 { ... same styles as canvas ... } */
