@@ -1,19 +1,25 @@
 html, body {
   margin: 0;
   padding: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw; /* Use viewport width unit */
+  height: 100vh; /* Use viewport height unit */
   overflow: hidden; /* Keep preventing scrollbars */
-  display: block; /* Change from flex back to block */
-  background-color: #000; /* Black background for any slivers */
+  display: flex; /* Use flexbox again for centering */
+  justify-content: center;
+  align-items: center;
+  background-color: #000; /* Black background for letterboxing */
 }
 
 canvas {
-  display: block; /* Important! */
-  width: 100%;    /* Force canvas element width */
-  height: 100%;   /* Force canvas element height */
-  /* Remove object-fit - let the browser scale the internal drawing */
-  /* Keep image-rendering for sharpness */
+  display: block;
+  /* Use max values + object-fit to scale correctly */
+  max-width: 100vw;
+  max-height: 100vh;
+  width: auto;   /* Let browser decide based on aspect ratio */
+  height: auto;  /* Let browser decide based on aspect ratio */
+  object-fit: contain; /* Scale while maintaining aspect ratio */
+
+  /* Pixelated rendering attempts */
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   image-rendering: -moz-crisp-edges;
@@ -21,7 +27,7 @@ canvas {
   -ms-interpolation-mode: nearest-neighbor;
 }
 
-/* Ensure no default margin/padding messes things up */
+/* Reset default box sizing */
 * {
   box-sizing: border-box;
 }
