@@ -1,3 +1,2 @@
-# Kittys-cuddle-collection
+# Kitty-Jet-Pack
 Web APP
-https://playfulpawsprod.github.io/Kittys-Cuddle-Collection/
