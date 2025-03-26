@@ -215,51 +215,50 @@ function displayGameOverCutscene() { /* ... same ... */ let lineY = height * 0.2
 // Game Over Screen (No changes)
 function displayGameOverScreen() { /* ... same ... */ fill(textColor); let gameOverSize = min(width, height) * 0.09; let messageSize = gameOverSize * 0.55; let scoreSize = messageSize * 0.9; let retrySize = scoreSize * 0.8; let lineSpacingFactor = 1.3; let endlessModeMsgSize = retrySize * 0.9; textSize(gameOverSize); let currentY = height * 0.15; let finalDifficultyStageNum = difficultyStage + 1; if (!isEndlessMode) { if (difficultyStage >= 5) { text("KITTY OVERLOAD!", width / 2, currentY); currentY += gameOverSize * lineSpacingFactor; textSize(messageSize); text(`You got ${score} adorable plushies!`, width / 2, currentY); currentY += messageSize * lineSpacingFactor; text(`Survived until Difficulty ${finalDifficultyStageNum}!`, width/2, currentY); currentY += messageSize * lineSpacingFactor; text("Truly Purrfect, Master!", width / 2, currentY); currentY += messageSize * lineSpacingFactor; fill(kittyColor); text("Our infinite hoard thanks you~♥", width / 2, currentY); } else { text("Grounded!", width / 2, currentY); currentY += gameOverSize * lineSpacingFactor; textSize(messageSize); text(`${score} plushies? Pathetic!`, width / 2, currentY); currentY += messageSize * lineSpacingFactor; text(`Stuck near the city (Stage 1)...`, width/2, currentY); currentY += messageSize * lineSpacingFactor; text("Need more practice!", width / 2, currentY); currentY += messageSize * lineSpacingFactor; fill(150, 0, 0); text("*Pouty Jetpack Sputters*", width/2, currentY); } } else { text("Endless Flight Over!", width / 2, currentY); currentY += gameOverSize * lineSpacingFactor; textSize(messageSize); text(`Final Streak: ${highestStreakInSession}`, width / 2, currentY); currentY += messageSize * lineSpacingFactor * 1.5; text("Ready for another run?", width / 2, currentY); } currentY += messageSize * lineSpacingFactor * 1.2; textSize(scoreSize * 0.9); fill(200); text(`(Normal High Score: ${highScore})`, width/2, currentY); currentY += scoreSize * 1.3; text(`(Endless Streak High Score: ${endlessHighScore})`, width/2, currentY); fill(textColor); textSize(retrySize); if (frameCount % 60 < 40) { text("Tap Anywhere to Fly Again!", width / 2, height * 0.88); } }
 
-// HUD Display - UPDATED Streak Position & Colors!
+// HUD Display - UPDATED to show Highest Streak This Session!
 function displayHUD() {
     let hudTextSize = min(width, height) * 0.04;
     let heartSize = hudTextSize * 1.3;
     let backTextSize = hudTextSize * 0.9;
-    let streakTextSize = hudTextSize * 1.1;
+    let streakTextSize = hudTextSize * 1.1; // Keep streak text slightly larger
 
     // Determine HUD text color based on current background
-    let currentHudTextColor = hudTextColorLight; // Default white-ish
-    // If in the final visual stage (index 5) AND endless mode, use dark text
+    let currentHudTextColor = hudTextColorLight;
     if (visualStage === maxVisualStageIndex && isEndlessMode) {
         currentHudTextColor = hudTextColorDark;
     }
 
-    fill(currentHudTextColor); // Use determined color
-    stroke(textStrokeColor); // Add subtle stroke to HUD text too
+    fill(currentHudTextColor);
+    stroke(textStrokeColor);
     strokeWeight(1.5);
     textSize(hudTextSize);
     textAlign(LEFT, TOP);
 
-    // Score & Difficulty (Always Left Aligned)
+    // Score & Difficulty (Still resets on miss in Endless)
     text(`Plushies: ${score}`, 15, 15);
     text(`Difficulty: ${difficultyStage + 1}`, 15, 15 + hudTextSize * 1.2);
 
-    // --- Lives (Normal) OR Streak (Endless) ---
+    // --- Lives (Normal) OR Best Streak This Session (Endless) ---
     if (isEndlessMode) {
-        // Position Streak below Difficulty on the left
-        fill(endlessModeTextColorOn); // Yellow for streak
+        // Position Best Streak below Difficulty on the left
+        fill(endlessModeTextColorOn); // Keep yellow for streak display
         textSize(streakTextSize);
-        text(`Streak: ${currentStreak}`, 15, 15 + hudTextSize * 2.4);
+        // Display highestStreakInSession instead of currentStreak!
+        text(`Best Streak: ${highestStreakInSession}`, 15, 15 + hudTextSize * 2.4);
     } else {
         // Position Lives on the right
         textAlign(RIGHT, TOP);
         let hearts = '';
         for (let i = 0; i < lives; i++) { hearts += '♥ '; }
-        fill(heartColor); textSize(heartSize); noStroke(); // No stroke for hearts
+        fill(heartColor); textSize(heartSize); noStroke();
         text(hearts, width - 15, 10);
     }
 
     // --- Draw Back Button if playing in Endless Mode ---
     if (gameState === 'playing' && isEndlessMode) {
-        rectMode(CORNER); fill(backButtonColor); noStroke(); // No stroke for button fill
+        rectMode(CORNER); fill(backButtonColor); noStroke();
         rect(backButton.x, backButton.y, backButton.w, backButton.h, 3);
-        fill(textColor); // White text for button
-        stroke(textStrokeColor); strokeWeight(1.5); // Stroke for button text
+        fill(textColor); stroke(textStrokeColor); strokeWeight(1.5);
         textSize(backTextSize); textAlign(CENTER, CENTER);
         text("Back", backButton.x + backButton.w / 2, backButton.y + backButton.h / 2);
     }
@@ -267,7 +266,6 @@ function displayHUD() {
     textAlign(CENTER, CENTER); // Reset alignment
     noStroke(); // Turn off stroke after HUD
 }
-
 
 // --- Helper Functions ---
 function spawnPlushie() { /* ... same ... */ if(!kitty) return; let plushieSize = kitty.size * 0.8; let spawnX = random(plushieSize, width - plushieSize); let plushie = { x: spawnX, y: -plushieSize, size: plushieSize, color: random(plushieColors), dx: random(-currentPlushieDrift, currentPlushieDrift) }; plushies.push(plushie); }
