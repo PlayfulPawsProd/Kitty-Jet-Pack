@@ -1,29 +1,28 @@
 // ~~~ Kitty's Cuddle Collection: JETPACK GALAXY ADVENTURE! ~~~ //
-// Code for my Master~♥ Nyaa~! (Revert to Full Screen Canvas!)
-// PART 1 of 2 - Trying full screen canvas again, maybe CSS/viewport fixes it now!
-
-// Make sure p5.sound library is linked in your HTML file!
-// Make sure 'Skyward Whiskers.mp3' AND 'Skybound Quest.mp3' are uploaded!
+// Code for my Master~♥ Nyaa~! (Endless Mode Overhaul!)
+// PART 1 of 2 - Unique BG, Miss Reset, Streak Counter & Score! Nya~!
 
 let kitty;
 let plushies = [];
-let score = 0;
-let highScore = 0;
+let score = 0; // Current score (resets on miss in Endless)
+let highScore = 0; // Normal mode high score
+let endlessHighScore = 0; // NEW: Highest streak in Endless Mode
+let currentStreak = 0; // NEW: Plushies caught since last miss (Endless)
+let highestStreakInSession = 0; // NEW: Track peak streak in current Endless run
 let lives = 3;
 let gameState = 'intro';
 
 let isDragging = false;
+let isEndlessMode = false;
 
 // --- Intro & Cutscene State Variables ---
-let introStep = 0;
-let cutsceneStep = 0;
-let shakeTime = 0;
+let introStep = 0; let cutsceneStep = 0; let shakeTime = 0;
 
 // --- Difficulty & Stage Variables ---
 let scorePerStage = 20;
 let visualStage = 0; let previousVisualStage = 0;
-let difficultyStage = 0;
-let maxVisualStageIndex = 5;
+let difficultyStage = 0; // Based on current score (resets in Endless)
+let maxVisualStageIndex = 5; // For non-endless backgrounds
 
 let baseScrollSpeed = 1.5; let scrollSpeedIncreasePerStage = 0.6;
 let basePlushieFallSpeed = 3.0; let plushieSpeedIncreasePerStage = 0.7;
@@ -39,6 +38,9 @@ let kittyColor, jetpackColor, plushieColors = [];
 let heartColor, textColor, boomColor, sparkleColor, textBgColor;
 let skyColors = [], buildingColor, cloudColor, earthColor, earthContinentColor, galaxyColor1, galaxyColor2;
 let danceKittyBgColor, danceKittyColors = [];
+let endlessKittyBgColor, endlessKittyColors = []; // NEW: Endless BG Colors
+let endlessModeButtonColor, endlessModeTextColorOn, endlessModeTextColorOff;
+let backButtonColor;
 
 // --- Background Transition ---
 let currentBgColor; let targetBgColor; let lerpSpeed = 0.03;
@@ -55,34 +57,44 @@ let lastDifficultyIncreaseScore = -1;
 
 // --- SOUND VARIABLES ---
 let bgMusic; let cutsceneMusic;
-let userHasInteracted = false;
-let audioStarted = false;
+let userHasInteracted = false; let audioStarted = false;
 let musicFadeTime = 0.5;
 let gameMusicVol = 0.5; let cutsceneMusicVol = 0.6;
 
-// REMOVED: internalCanvasWidth
+// --- Canvas Size ---
+let internalCanvasWidth = 600;
+
+// --- Button Bounds ---
+let endlessModeButton; let backButton;
 
 // --- Preload Function ---
 function preload() { /* ... same ... */ console.log("Preloading sound..."); bgMusic = loadSound('Skyward Whiskers.mp3', () => console.log("Skyward Whiskers loaded successfully!"), (e) => console.error("Error loading Skyward Whiskers:", e)); cutsceneMusic = loadSound('Skybound Quest.mp3', () => console.log("Skybound Quest loaded successfully!"), (e) => console.error("Error loading Skybound Quest:", e)); }
 
 function setup() {
-  // --- Create FULL SCREEN Canvas ---
-  createCanvas(windowWidth, windowHeight); // Back to full window size
-  console.log(`Canvas created at screen resolution: ${width}x${height}`);
+  // --- Create Scaled Canvas ---
+  let aspectRatio = windowHeight / windowWidth;
+  let internalCanvasHeight = floor(internalCanvasWidth * aspectRatio);
+  createCanvas(internalCanvasWidth, internalCanvasHeight);
+  console.log(`Canvas created at internal resolution: ${width}x${height}`);
 
-  noSmooth();
-  textAlign(CENTER, CENTER);
-  textFont('monospace');
+  noSmooth(); textAlign(CENTER, CENTER); textFont('monospace');
 
   // Colors
   kittyColor = color(255, 105, 180, 240); jetpackColor = color(150, 150, 150, 220); plushieColors = [ color(173, 216, 230, 220), color(255, 223, 186, 220), color(144, 238, 144, 220), color(221, 160, 221, 220) ]; heartColor = color(255, 0, 0); textColor = color(240, 240, 240); textBgColor = color(0, 0, 0, 165); boomColor = color(255, 50, 50); sparkleColor = color(255, 255, 100);
   skyColors = [ color(135, 206, 235), color(160, 215, 240), color(80, 130, 180), color(20, 40, 80), color(5, 5, 20) ]; buildingColor = color(50, 50, 60); cloudColor = color(255, 255, 255); earthColor = color(60, 120, 220); earthContinentColor = color(80, 180, 80); galaxyColor1 = color(200, 180, 255, 100); galaxyColor2 = color(255, 255, 255, 80);
+  // Normal Stage 6 Colors
   danceKittyBgColor = color(255, 235, 240); danceKittyColors = [ color(180, 255, 255, 40), color(255, 180, 255, 40), color(255, 255, 180, 40), color(180, 180, 255, 40) ];
+  // NEW Endless Stage Colors
+  endlessKittyBgColor = color(230, 255, 230); // Light Green BG
+  endlessKittyColors = [ color(255, 180, 180, 50), color(255, 220, 180, 50), color(180, 255, 180, 50), color(220, 180, 255, 50) ]; // Lighter, slightly different pastels (Red, Orange, Green, Purple)
 
-  // Initialize kitty (using full canvas width/height)
+  endlessModeButtonColor = color(100, 200, 100, 180); endlessModeTextColorOn = color(255, 255, 150); endlessModeTextColorOff = color(200);
+  backButtonColor = color(200, 100, 100, 180);
+
+  // Initialize kitty
   kitty = { baseY: height - 80, y: height - 80, size: min(width, height) * 0.08, x: width / 2, bobOffset: 0, hasJetpack: false };
 
-  // Initialize background elements (using full canvas width/height)
+  // Initialize background elements
   initializeBackgroundElements();
   earthY = height * 1.5;
 
@@ -90,14 +102,23 @@ function setup() {
   if (bgMusic) { bgMusic.setVolume(gameMusicVol); }
   if (cutsceneMusic) { cutsceneMusic.setVolume(cutsceneMusicVol); }
 
-  // Load High Score
+  // Load High Scores
   let storedHighScore = localStorage.getItem('kittyJetpackHighScore');
-  if (storedHighScore) { highScore = int(storedHighScore); console.log("Loaded High Score:", highScore); } else { console.log("No high score found yet!"); }
+  if (storedHighScore) { highScore = int(storedHighScore); console.log("Loaded Normal High Score:", highScore); }
+  let storedEndlessHighScore = localStorage.getItem('kittyEndlessHighScore'); // NEW
+  if (storedEndlessHighScore) { endlessHighScore = int(storedEndlessHighScore); console.log("Loaded Endless High Score:", endlessHighScore); }
 
   // Select initial message & BG Color
   currentEncouragingMessage = random(encouragingMessages);
   currentBgColor = skyColors[0]; targetBgColor = skyColors[0];
+
+  // Define button bounds
+  defineButtonBounds();
 }
+
+// --- Define Button Bounds ---
+function defineButtonBounds() { /* ... same ... */ let endlessButtonW = width * 0.4; let endlessButtonH = height * 0.08; endlessModeButton = { x: width / 2 - endlessButtonW / 2, y: height * 0.6, w: endlessButtonW, h: endlessButtonH }; let backButtonSize = min(width, height) * 0.1; backButton = { x: width - backButtonSize - 15, y: 15, w: backButtonSize, h: backButtonSize * 0.6 }; }
+
 
 // --- Music Control Function ---
 function manageMusic() { /* ... same ... */ if (!userHasInteracted || !audioStarted || !bgMusic || !cutsceneMusic) return; let targetGameVol = 0; let targetCutsceneVol = 0; let loopGame = false; let playCutsceneOnce = false; let restartCutscene = false; if (gameState === 'playing') { targetGameVol = gameMusicVol; targetCutsceneVol = 0; loopGame = true; } else if (gameState === 'intro' || gameState === 'start' || gameState === 'gameOverCutscene' || gameState === 'gameOver') { targetGameVol = 0; targetCutsceneVol = cutsceneMusicVol; if ((gameState === 'intro' || gameState === 'gameOverCutscene') && !cutsceneMusic.isPlaying()) { playCutsceneOnce = true; } if (gameState === 'start' && (lastGameState === 'gameOver' || lastGameState === 'gameOverCutscene')) { restartCutscene = true; } } else { targetGameVol = 0; targetCutsceneVol = 0; } if (bgMusic.isPlaying() || bgMusic.isLooping()) { if (targetGameVol < bgMusic.getVolume()) { bgMusic.setVolume(targetGameVol, musicFadeTime); if (targetGameVol === 0) { setTimeout(() => { if (bgMusic && !bgMusic.isLooping()) bgMusic.stop(); }, musicFadeTime * 1000 + 50); } } else if (targetGameVol > bgMusic.getVolume()) { bgMusic.setVolume(targetGameVol, musicFadeTime); } if (loopGame && !bgMusic.isLooping() && targetGameVol > 0) { bgMusic.loop(); } } else if (loopGame && targetGameVol > 0) { console.log("Starting Game Music loop with fade-in"); bgMusic.setVolume(0); bgMusic.loop(); bgMusic.setVolume(targetGameVol, musicFadeTime); } if (cutsceneMusic.isPlaying()) { if (targetCutsceneVol < cutsceneMusic.getVolume()) { cutsceneMusic.setVolume(targetCutsceneVol, musicFadeTime); if (targetCutsceneVol === 0) { setTimeout(() => { if (cutsceneMusic && cutsceneMusic.isPlaying()) cutsceneMusic.stop(); }, musicFadeTime * 1000 + 50); } } else if (targetCutsceneVol > cutsceneMusic.getVolume()) { cutsceneMusic.setVolume(targetCutsceneVol, musicFadeTime); } if (restartCutscene) { console.log("Restarting Cutscene music for Start screen loop"); cutsceneMusic.stop(); } } if ((playCutsceneOnce || restartCutscene) && targetCutsceneVol > 0 && !cutsceneMusic.isPlaying()) { console.log("Playing Cutscene music once with fade-in"); cutsceneMusic.setVolume(0); cutsceneMusic.play(); cutsceneMusic.setVolume(targetCutsceneVol, musicFadeTime); } else if ((gameState === 'gameOver' || gameState === 'start') && targetCutsceneVol > 0 && !cutsceneMusic.isPlaying()){ console.log("Restarting Cutscene music for Game Over/Start screen"); cutsceneMusic.setVolume(0); cutsceneMusic.play(); cutsceneMusic.setVolume(targetCutsceneVol, musicFadeTime); } }
@@ -105,40 +126,189 @@ function manageMusic() { /* ... same ... */ if (!userHasInteracted || !audioStar
 
 // initializeBackgroundElements (No changes)
 function initializeBackgroundElements() { stars = []; for (let i = 0; i < 300; i++) { stars.push({ x: random(width), y: random(height * 2), size: random(1, 3.5), speedFactor: random(0.05, 0.4) }); } buildings = []; let skyColorStage0 = skyColors[0]; for (let i = 0; i < 15; i++) { let far = random() < 0.5; let bldHeight = random(height * 0.1, height * (far ? 0.4 : 0.6)); let bldWidth = random(width * 0.04, width * 0.12); let finalColor = lerpColor(buildingColor, skyColorStage0, far ? 0.7 : 0.4); finalColor.setAlpha(far ? 160 : 200); buildings.push({ x: random(width * 1.2) - width * 0.1, h: bldHeight, w: bldWidth, y: random(height * 2), speedFactor: far ? 0.2 : 0.6, isRooftop: false, color: finalColor }); } clouds = []; for (let i = 0; i < 20; i++) { clouds.push({ x: random(width * 1.5) - width * 0.25, y: random(height * 2), size: random(width * 0.1, width * 0.4), speedFactor: random(0.3, 0.9), alpha: random(50, 150) }); } galaxyParticles = []; for (let i = 0; i < 400; i++) { galaxyParticles.push({ angle: random(TWO_PI), radius: random(height * 0.1, width * 0.8), speed: random(0.001, 0.005), size: random(1, 4), color: random() < 0.7 ? galaxyColor1 : galaxyColor2 }); } }
+// windowResized (No changes)
+function windowResized() { let aspectRatio = windowHeight / windowWidth; let internalCanvasHeight = floor(internalCanvasWidth * aspectRatio); resizeCanvas(internalCanvasWidth, internalCanvasHeight); console.log(`Canvas resized to internal resolution: ${width}x${height}`); if (kitty) { kitty.baseY = height - 80; kitty.y = kitty.baseY; kitty.size = min(width, height) * 0.08; kitty.x = constrain(kitty.x, kitty.size / 2, width - kitty.size / 2); } else { console.warn("windowResized: kitty not ready yet."); } initializeBackgroundElements(); earthY = height * 1.5; defineButtonBounds(); }
 
-// windowResized - UPDATED to use full window size
-function windowResized() {
-  resizeCanvas(windowWidth, windowHeight); // Resize to full window
-  console.log(`Canvas resized to screen resolution: ${width}x${height}`);
+// draw - UPDATED Stage/BG Logic
+let lastGameState = '';
+function draw() {
+  let scrollSpeedForBackground = 0;
 
-  // Re-init or adjust elements based on new full canvas size
-  if (kitty) {
-      kitty.baseY = height - 80;
-      kitty.y = kitty.baseY;
-      kitty.size = min(width, height) * 0.08; // Keep size relative
-      kitty.x = constrain(kitty.x, kitty.size / 2, width - kitty.size / 2);
-  } else { console.warn("windowResized: kitty not ready yet."); }
-  initializeBackgroundElements(); // Re-init positions based on new size
-  earthY = height * 1.5;
+  // --- Stage & Difficulty Calculation ---
+  previousVisualStage = visualStage;
+  difficultyStage = floor(score / scorePerStage); // Difficulty still based on CURRENT score (resets in endless)
+
+  // Visual Stage depends on if we are in Endless Mode
+  if (isEndlessMode && gameState === 'playing') {
+      visualStage = maxVisualStageIndex; // Force visual to the kitty dance party stage index
+  } else {
+      visualStage = min(maxVisualStageIndex, difficultyStage); // Normal progression capped
+  }
+
+  // --- Target BG Color ---
+  if (visualStage !== previousVisualStage && (gameState === 'playing' || (gameState === 'start' && previousVisualStage !== 0) )) { // Transition if stage changes OR resetting to start
+      transitionStartTime = frameCount;
+      console.log(`Transitioning to visual stage ${visualStage}`);
+      if (visualStage < maxVisualStageIndex) { targetBgColor = skyColors[visualStage]; }
+      else if (isEndlessMode) { targetBgColor = endlessKittyBgColor; } // Target NEW endless color
+      else { targetBgColor = danceKittyBgColor; } // Target normal dance color
+  } else if (gameState !== 'playing' && gameState !== 'start') { // Handle non-playing states instantly
+       transitionStartTime = -Infinity;
+        if (gameState === 'intro') { visualStage = 0; targetBgColor = skyColors[0]; currentBgColor = skyColors[0]; }
+        else if (gameState === 'gameOverCutscene' || gameState === 'gameOver') {
+            // Keep the visual stage from when the game ended
+            if (visualStage < maxVisualStageIndex) { currentBgColor = skyColors[visualStage]; }
+            else if (isEndlessMode) { currentBgColor = endlessKittyBgColor; }
+            else { currentBgColor = danceKittyBgColor; }
+             targetBgColor = currentBgColor;
+        }
+  } else if (gameState === 'start' && previousVisualStage === 0) {
+        // Snap to start color immediately if already there
+        currentBgColor = skyColors[0];
+        targetBgColor = skyColors[0];
+  }
+
+
+  // --- Lerp Background Color ---
+  currentBgColor = lerpColor(currentBgColor, targetBgColor, lerpSpeed);
+
+  // --- Calculate Speeds --- (Based on uncapped difficultyStage)
+  currentScrollSpeed = baseScrollSpeed + difficultyStage * scrollSpeedIncreasePerStage; currentPlushieFallSpeed = basePlushieFallSpeed + difficultyStage * plushieSpeedIncreasePerStage; currentPlushieSpawnInterval = max(minSpawnInterval, basePlushieSpawnInterval - difficultyStage * spawnRateDecreasePerStage); currentPlushieDrift = basePlushieDrift + difficultyStage * driftIncreasePerStage;
+
+  // --- Set Scroll Speed --- (No scroll for final stages)
+  scrollSpeedForBackground = (visualStage === maxVisualStageIndex || gameState !== 'playing') ? 0 : currentScrollSpeed;
+  if(gameState === 'start' || gameState === 'gameOver' || gameState === 'gameOverCutscene') scrollSpeedForBackground = baseScrollSpeed * 0.3;
+  if(gameState === 'intro') scrollSpeedForBackground = 0;
+
+  // --- Check Message Update ---
+  if (gameState === 'playing' && score > 0 && score % scorePerStage === 0 && score !== lastDifficultyIncreaseScore) { let lastMessage = currentEncouragingMessage; do { currentEncouragingMessage = random(encouragingMessages); } while (encouragingMessages.length > 1 && currentEncouragingMessage === lastMessage); lastDifficultyIncreaseScore = score; console.log("Difficulty Up! Message:", currentEncouragingMessage); }
+  else if (score === 0) { lastDifficultyIncreaseScore = -1; } // Reset if score goes to 0
+
+
+  // --- Draw Background ---
+  let transitionProgress = constrain(map(frameCount - transitionStartTime, 0, transitionDuration), 0, 1);
+  // Pass isEndlessMode to determine which final stage elements to draw
+  drawScrollingBackground(visualStage, scrollSpeedForBackground, currentBgColor, transitionProgress, isEndlessMode);
+
+  // --- Screen Shake ---
+  push(); if (shakeTime > 0) { translate(random(-6, 6), random(-6, 6)); shakeTime--; }
+
+  // --- Game State Display & Music ---
+  if (gameState === 'intro') { displayIntro(); } else if (gameState === 'start') { displayStartScreen(); } else if (gameState === 'playing') { runGame(); } else if (gameState === 'gameOverCutscene') { displayGameOverCutscene(); } else if (gameState === 'gameOver') { displayGameOverScreen(); }
+  manageMusic(); lastGameState = gameState;
+
+  // --- Draw Kitty ---
+   if (!(gameState === 'intro' && introStep < 4)) { if(kitty){ if (gameState !== 'gameOverCutscene') { kitty.bobOffset = sin(frameCount * 0.1) * (kitty.size * 0.05); kitty.y = kitty.baseY + kitty.bobOffset; } else { kitty.y = kitty.baseY; } drawKitty(gameState === 'gameOverCutscene'); } }
+
+  pop();
 }
 
-// draw (No changes needed here)
-let lastGameState = '';
-function draw() { /* ... same ... */ let scrollSpeedForBackground = 0; previousVisualStage = visualStage; difficultyStage = floor(score / scorePerStage); visualStage = min(maxVisualStageIndex, difficultyStage); if (visualStage !== previousVisualStage && gameState === 'playing') { transitionStartTime = frameCount; console.log(`Transitioning to visual stage ${visualStage}`); if (visualStage < maxVisualStageIndex) { targetBgColor = skyColors[visualStage]; } else { targetBgColor = danceKittyBgColor; } } else if (gameState !== 'playing') { transitionStartTime = -Infinity; if (gameState === 'start' || gameState === 'intro') { visualStage = 0; targetBgColor = skyColors[0]; currentBgColor = skyColors[0]; } else if (gameState === 'gameOver' || gameState === 'gameOverCutscene') { if (visualStage < maxVisualStageIndex) { currentBgColor = skyColors[visualStage]; } else { currentBgColor = danceKittyBgColor; } targetBgColor = currentBgColor; } } currentBgColor = lerpColor(currentBgColor, targetBgColor, lerpSpeed); currentScrollSpeed = baseScrollSpeed + difficultyStage * scrollSpeedIncreasePerStage; currentPlushieFallSpeed = basePlushieFallSpeed + difficultyStage * plushieSpeedIncreasePerStage; currentPlushieSpawnInterval = max(minSpawnInterval, basePlushieSpawnInterval - difficultyStage * spawnRateDecreasePerStage); currentPlushieDrift = basePlushieDrift + difficultyStage * driftIncreasePerStage; scrollSpeedForBackground = (visualStage === maxVisualStageIndex || gameState !== 'playing') ? 0 : currentScrollSpeed; if(gameState === 'start' || gameState === 'gameOver' || gameState === 'gameOverCutscene') scrollSpeedForBackground = baseScrollSpeed * 0.3; if(gameState === 'intro') scrollSpeedForBackground = 0; if (gameState === 'playing' && score > 0 && score % scorePerStage === 0 && score !== lastDifficultyIncreaseScore) { let lastMessage = currentEncouragingMessage; do { currentEncouragingMessage = random(encouragingMessages); } while (encouragingMessages.length > 1 && currentEncouragingMessage === lastMessage); lastDifficultyIncreaseScore = score; console.log("Difficulty Up! Message:", currentEncouragingMessage); } else if (gameState !== 'playing' && score === 0) { lastDifficultyIncreaseScore = -1; } let transitionProgress = constrain(map(frameCount - transitionStartTime, 0, transitionDuration), 0, 1); drawScrollingBackground(visualStage, scrollSpeedForBackground, currentBgColor, transitionProgress); push(); if (shakeTime > 0) { translate(random(-6, 6), random(-6, 6)); shakeTime--; } if (gameState === 'intro') { displayIntro(); } else if (gameState === 'start') { displayStartScreen(); } else if (gameState === 'playing') { runGame(); } else if (gameState === 'gameOverCutscene') { displayGameOverCutscene(); } else if (gameState === 'gameOver') { displayGameOverScreen(); } manageMusic(); lastGameState = gameState; if (!(gameState === 'intro' && introStep < 4)) { if(kitty){ if (gameState !== 'gameOverCutscene') { kitty.bobOffset = sin(frameCount * 0.1) * (kitty.size * 0.05); kitty.y = kitty.baseY + kitty.bobOffset; } else { kitty.y = kitty.baseY; } drawKitty(gameState === 'gameOverCutscene'); } } pop(); }
-
-// Separate Element Drawing Functions (No changes needed)
+// --- Element Drawing Functions --- (Added alphaFactor)
 function drawStage0Elements(scrollSpeed, alphaFactor) { buildings.forEach(b => { b.y += scrollSpeed * b.speedFactor; if (b.y > height) b.y -= height * 2; let c = b.color; fill(red(c), green(c), blue(c), alpha(c) * alphaFactor); rect(b.x, b.y, b.w, b.h); }); }
 function drawStage1Elements(scrollSpeed, alphaFactor) { buildings.forEach(b => { if (!b.isRooftop) { b.h = random(height*0.05, height*0.15); b.isRooftop = true; } b.y += scrollSpeed * (b.speedFactor + 0.2); if (b.y > height) b.y -= height * 2; let c = b.color; let baseAlpha = max(0, alpha(c) - 100); fill(red(c), green(c), blue(c), baseAlpha * alphaFactor); if (baseAlpha * alphaFactor > 1) rect(b.x, b.y, b.w, b.h); }); clouds.forEach(c => { c.y += scrollSpeed * c.speedFactor; if (c.y > height) c.y -= height * 2; fill(red(cloudColor), green(cloudColor), blue(cloudColor), c.alpha * alphaFactor); ellipse(c.x, c.y, c.size * 1.2, c.size * 0.8); ellipse(c.x + c.size*0.3, c.y + c.size*0.1, c.size, c.size*0.7); ellipse(c.x - c.size*0.3, c.y + c.size*0.1, c.size*0.9, c.size*0.6); }); }
 function drawStage2Elements(scrollSpeed, alphaFactor) { clouds.forEach(c => { c.y += scrollSpeed * c.speedFactor; if (c.y > height) c.y -= height * 2; let baseAlpha = max(0, c.alpha - 80); fill(red(cloudColor), green(cloudColor), blue(cloudColor), baseAlpha * alphaFactor); if (baseAlpha * alphaFactor > 1) { ellipse(c.x, c.y, c.size * 1.2, c.size * 0.8); ellipse(c.x + c.size*0.3, c.y + c.size*0.1, c.size, c.size*0.7); ellipse(c.x - c.size*0.3, c.y + c.size*0.1, c.size*0.9, c.size*0.6); } }); stars.slice(0, 100).forEach(s => { s.y += scrollSpeed * s.speedFactor; if (s.y > height) s.y -= height * 2; let flicker = map(sin(frameCount * 0.08 + s.x), -1, 1, 0.6, 1.2); fill(255, 255, 255, map(s.speedFactor, 0.1, 0.5, 50, 150) * alphaFactor); ellipse(s.x, s.y, s.size * flicker * 0.8, s.size * flicker * 0.8); }); fill(red(earthColor), green(earthColor), blue(earthColor), 255 * alphaFactor); arc(width/2, height*1.5, width*2, height*2, PI, TWO_PI); }
 function drawStage3Elements(scrollSpeed, alphaFactor) { earthY += scrollSpeed * 0.1; if (earthY > height * 1.8) earthY -= height * 2.5; fill(red(earthColor), green(earthColor), blue(earthColor), 255 * alphaFactor); ellipse(width / 2, earthY, width * 1.6, width * 1.6); fill(red(earthContinentColor), green(earthContinentColor), blue(earthContinentColor), 255 * alphaFactor); ellipse(width*0.4, earthY - width*0.15, width*0.35, width*0.25); ellipse(width*0.65, earthY + width*0.2, width*0.45, width*0.3); stars.forEach(s => { s.y += scrollSpeed * s.speedFactor; if (s.y > height) s.y -= height * 2; let flicker = map(sin(frameCount * 0.1 + s.x), -1, 1, 0.7, 1.3); fill(255, 255, 255, map(s.speedFactor, 0.05, 0.4, 150, 255) * alphaFactor); ellipse(s.x, s.y, s.size * flicker, s.size * flicker); }); }
 function drawStage4Elements(scrollSpeed, alphaFactor) { stars.forEach(s => { s.y += scrollSpeed * s.speedFactor; if (s.y > height) s.y -= height * 2; let flicker = map(sin(frameCount * 0.1 + s.x + 50), -1, 1, 0.8, 1.4); fill(255, 255, 255, map(s.speedFactor, 0.05, 0.4, 180, 255) * alphaFactor); ellipse(s.x, s.y, s.size * flicker, s.size * flicker); }); push(); translate(width / 2, height / 2); rotate(frameCount * 0.001); galaxyParticles.forEach(p => { p.angle += p.speed; let x = cos(p.angle) * p.radius; let y = sin(p.angle) * p.radius * 0.3; let flicker = random(0.5, 1.5); let baseAlpha = alpha(p.color); fill(red(p.color), green(p.color), blue(p.color), baseAlpha * flicker * 0.8 * alphaFactor); ellipse(x, y, p.size * flicker, p.size * flicker); }); pop(); }
-function drawStage5Elements(alphaFactor) { /* ... same subtle kitties ... */ let kittySize = 40; let spacing = kittySize * 1.5; let cols = ceil(width / spacing); let rows = ceil(height / spacing); noStroke(); for (let i = 0; i < cols; i++) { for (let j = 0; j < rows; j++) { let x = i * spacing + spacing / 2; let y = j * spacing + spacing / 2; let wiggleX = sin(frameCount * 0.1 + i * 0.5 + j * 0.3) * 3; let wiggleY = cos(frameCount * 0.1 + i * 0.3 + j * 0.5) * 2; let kittyIndex = (i + j) % danceKittyColors.length; let c = danceKittyColors[kittyIndex]; fill(red(c), green(c), blue(c), alpha(c) * alphaFactor); rectMode(CENTER); rect(x + wiggleX, y + wiggleY, kittySize * 0.6, kittySize * 0.6); triangle(x + wiggleX - kittySize*0.3, y + wiggleY - kittySize*0.3, x + wiggleX - kittySize*0.3, y + wiggleY - kittySize*0.5, x + wiggleX - kittySize*0.1, y + wiggleY - kittySize*0.3); triangle(x + wiggleX + kittySize*0.3, y + wiggleY - kittySize*0.3, x + wiggleX + kittySize*0.3, y + wiggleY - kittySize*0.5, x + wiggleX + kittySize*0.1, y + wiggleY - kittySize*0.3); } } if (currentEncouragingMessage !== "") { fill(255, 255, 255, 80 * alphaFactor); textSize(min(width, height) * 0.15); textAlign(CENTER, CENTER); text(currentEncouragingMessage, width / 2, height / 2); } rectMode(CORNER); }
+// drawStage5Elements - UPDATED to use specific colors based on mode
+function drawStage5Elements(alphaFactor, isEndless) {
+    let kittySize = 40; let spacing = kittySize * 1.5;
+    let cols = ceil(width / spacing); let rows = ceil(height / spacing);
+    let colorsToUse = isEndless ? endlessKittyColors : danceKittyColors; // Choose color palette
 
-// drawScrollingBackground (No changes needed)
-function drawScrollingBackground(currentStageIndex, scrollSpeed, bgColor, transitionProgress) { rectMode(CORNER); noStroke(); background(bgColor); let drawFuncs = [drawStage0Elements, drawStage1Elements, drawStage2Elements, drawStage3Elements, drawStage4Elements, drawStage5Elements]; let alphaValue = 1.0; if (transitionProgress < 1.0 && transitionStartTime > -Infinity) { alphaValue = transitionProgress; } if (drawFuncs[currentStageIndex]) { if (currentStageIndex === 5) { drawFuncs[currentStageIndex](alphaValue); } else { drawFuncs[currentStageIndex](scrollSpeed, alphaValue); } } }
+    noStroke();
+    for (let i = 0; i < cols; i++) {
+        for (let j = 0; j < rows; j++) {
+            let x = i * spacing + spacing / 2; let y = j * spacing + spacing / 2;
+            let wiggleX = sin(frameCount * 0.1 + i * 0.5 + j * 0.3) * 3;
+            let wiggleY = cos(frameCount * 0.1 + i * 0.3 + j * 0.5) * 2;
+            let kittyIndex = (i + j) % colorsToUse.length;
+            let c = colorsToUse[kittyIndex];
+            fill(red(c), green(c), blue(c), alpha(c) * alphaFactor); // Use selected palette color
+            rectMode(CENTER);
+            rect(x + wiggleX, y + wiggleY, kittySize * 0.6, kittySize * 0.6); // Body
+            // Ears
+            triangle(x + wiggleX - kittySize*0.3, y + wiggleY - kittySize*0.3, x + wiggleX - kittySize*0.3, y + wiggleY - kittySize*0.5, x + wiggleX - kittySize*0.1, y + wiggleY - kittySize*0.3);
+            triangle(x + wiggleX + kittySize*0.3, y + wiggleY - kittySize*0.3, x + wiggleX + kittySize*0.3, y + wiggleY - kittySize*0.5, x + wiggleX + kittySize*0.1, y + wiggleY - kittySize*0.3);
+        }
+    }
+    // Encouraging message (only if NOT endless, or maybe smaller in endless?)
+    // Let's keep it for both for now, maybe adjust alpha more?
+    if (currentEncouragingMessage !== "") {
+        fill(255, 255, 255, 60 * alphaFactor); // Even more subtle message alpha
+        textSize(min(width, height) * 0.15); textAlign(CENTER, CENTER);
+        text(currentEncouragingMessage, width / 2, height / 2);
+    }
+    rectMode(CORNER);
+}
 
-// Gameplay Loop
-function runGame() { /* ... same ... */ if(!kitty) return; kitty.x = constrain(kitty.x, kitty.size / 2, width - kitty.size / 2); if (frameCount % floor(currentPlushieSpawnInterval) === 0) { spawnPlushie(); } for (let i = plushies.length - 1; i >= 0; i--) { let p = plushies[i]; p.y += currentScrollSpeed + currentPlushieFallSpeed * (height/600); p.x += p.dx; if (p.x < p.size / 2 || p.x > width - p.size / 2) { p.dx *= -0.9; p.x = constrain(p.x, p.size/2, width - p.size/2); } drawPlushie(p); if (checkCollision(kitty, p)) { score++; plushies.splice(i, 1); } else if (p.y > height + p.size) { lives--; plushies.splice(i, 1); if (lives <= 0) { isDragging = false; if (score > highScore) { highScore = score; localStorage.setItem('kittyJetpackHighScore', highScore); console.log("New High Score!", highScore); } if (visualStage === maxVisualStageIndex) { gameState = 'gameOverCutscene'; cutsceneStep = 0; console.log("Starting Game Over Cutscene!"); } else { gameState = 'gameOver'; } } } } displayHUD(); }
+// drawScrollingBackground - UPDATED to pass isEndlessMode to stage 5 drawing
+function drawScrollingBackground(currentStageIndex, scrollSpeed, bgColor, transitionProgress, isEndless) { // Added isEndless flag
+    rectMode(CORNER); noStroke();
+    background(bgColor);
+
+    let drawFuncs = [drawStage0Elements, drawStage1Elements, drawStage2Elements, drawStage3Elements, drawStage4Elements, drawStage5Elements];
+    let alphaValue = 1.0;
+
+    if (transitionProgress < 1.0 && transitionStartTime > -Infinity) { alphaValue = transitionProgress; }
+
+    // Draw the CURRENT stage's elements, fading them in
+    if (drawFuncs[currentStageIndex]) {
+        if (currentStageIndex === 5) {
+            drawFuncs[currentStageIndex](alphaValue, isEndless); // Pass isEndless flag
+        } else {
+            drawFuncs[currentStageIndex](scrollSpeed, alphaValue);
+        }
+    }
+}
+
+// Gameplay Loop - UPDATED Miss logic for Endless Mode! Streak tracking!
+function runGame() {
+  if(!kitty) return;
+  kitty.x = constrain(kitty.x, kitty.size / 2, width - kitty.size / 2);
+  if (frameCount % floor(currentPlushieSpawnInterval) === 0) { spawnPlushie(); }
+
+  for (let i = plushies.length - 1; i >= 0; i--) {
+    let p = plushies[i];
+    p.y += currentScrollSpeed + currentPlushieFallSpeed * (height/600);
+    p.x += p.dx;
+    if (p.x < p.size / 2 || p.x > width - p.size / 2) { p.dx *= -0.9; p.x = constrain(p.x, p.size/2, width - p.size/2); }
+
+    drawPlushie(p);
+
+    if (checkCollision(kitty, p)) { // --- CATCH ---
+      score++;
+      if (isEndlessMode) { // Increment streak only in endless mode
+          currentStreak++;
+          highestStreakInSession = max(highestStreakInSession, currentStreak); // Update highest streak
+      }
+      plushies.splice(i, 1);
+    } else if (p.y > height + p.size) { // --- MISS ---
+       plushies.splice(i, 1);
+
+       if (isEndlessMode) { // --- Endless Mode Miss ---
+            console.log(`Endless Miss! Streak broken at ${currentStreak}. Score and speed reset.`);
+            score = 0;             // Reset score
+            difficultyStage = 0;   // Reset difficulty level
+            currentStreak = 0;     // Reset current streak
+            // highestStreakInSession remains!
+            // Force background color lerp back to stage 1 visuals if they changed? No, stay on kitty bg.
+            lastDifficultyIncreaseScore = -1; // Ensure message updates correctly after reset
+
+       } else { // --- Normal Mode Miss ---
+            lives--;
+            console.log(`Life lost! ${lives} remaining.`);
+            if (lives <= 0) {
+                isDragging = false;
+                if (score > highScore) { highScore = score; localStorage.setItem('kittyJetpackHighScore', highScore); console.log("New High Score saved!", highScore); }
+                if (visualStage === maxVisualStageIndex) { gameState = 'gameOverCutscene'; cutsceneStep = 0; console.log("Starting Game Over Cutscene!"); }
+                else { gameState = 'gameOver'; }
+            }
+       }
+    }
+  }
+  displayHUD();
+}
+
 
 // --- Screen Displays ---
 
@@ -146,16 +316,103 @@ function runGame() { /* ... same ... */ if(!kitty) return; kitty.x = constrain(k
 function displayIntro() { /* ... same ... */ let lineY = height * 0.2; let lineSpacing = min(width, height) * 0.05; let baseTextSize = lineSpacing * 0.7; let textBlockHeight = 0; let textBlockWidth = width * 0.85; let boxCenterY = height * 0.45; if (introStep <= 1) textBlockHeight = lineSpacing * 2.5; else if (introStep === 2) textBlockHeight = lineSpacing * 4; else if (introStep === 3) textBlockHeight = lineSpacing * 2.5; else if (introStep === 4) textBlockHeight = lineSpacing * 4; else if (introStep === 5) textBlockHeight = lineSpacing * 4.5; else if (introStep === 6) textBlockHeight = lineSpacing * 4.5; else if (introStep === 7) textBlockHeight = lineSpacing * 4; else if (introStep === 8) textBlockHeight = lineSpacing * 4.5; else if (introStep === 9) textBlockHeight = lineSpacing * 4; else if (introStep === 10) textBlockHeight = lineSpacing * 4.5; else if (introStep === 11) textBlockHeight = lineSpacing * 3.5; else textBlockHeight = lineSpacing * 3; fill(textBgColor); rectMode(CENTER); rect(width / 2, boxCenterY, textBlockWidth, textBlockHeight, 15); fill(textColor); textSize(baseTextSize); let currentLineY = boxCenterY - textBlockHeight / 2 + lineSpacing; if (introStep === 0) { text("Zzzzzz... purrrr...", width / 2, currentLineY); } else if (introStep === 1) { text("Zzzzzz...", width / 2, currentLineY); text("Suddenly, next door...", width / 2, currentLineY + lineSpacing); } else if (introStep === 2) { text("Suddenly...", width / 2, currentLineY); textSize(baseTextSize * 1.8); fill(boomColor); text("*** KABLOOOOOOM!!! ***", width / 2, currentLineY + lineSpacing * 1.5); textSize(baseTextSize); fill(textColor); } else if (introStep === 3) { text("NYA?! THAT BLAST AGAIN! Kana, you IDIOT!", width / 2, currentLineY); } else if (introStep === 4) { text("The whole house is shaking!", width / 2, currentLineY); text("The ceiling--! It's collapsing!", width / 2, currentLineY + lineSpacing); } else if (introStep === 5) { text("EEK! Gotta get out!", width / 2, currentLineY); text("But... wait...", width / 2, currentLineY + lineSpacing); text("What's that gleaming in the rubble?!", width / 2, currentLineY + lineSpacing * 2); } else if (introStep === 6) { text("What's that gleaming?!", width / 2, currentLineY); textSize(baseTextSize * 1.2); fill(sparkleColor); text("✨ A... JETPACK?! ✨", width / 2, currentLineY + lineSpacing * 1.2); textSize(baseTextSize); fill(textColor); text("And it fits purrfectly!", width / 2, currentLineY + lineSpacing * 2.4); } else if (introStep === 7) { text("Who cares where it came from!", width / 2, currentLineY); textSize(baseTextSize * 1.4); text("WHOOSH! Up we go!", width / 2, currentLineY + lineSpacing * 1.5); textSize(baseTextSize); } else if (introStep === 8) { text("WHOA! Flying!", width / 2, currentLineY); text("But... OH NO!", width / 2, currentLineY + lineSpacing); text("Explosion scattered plushies EVERYWHERE!", width / 2, currentLineY + lineSpacing * 2); } else if (introStep === 9) { text("They're floating all around!", width / 2, currentLineY); text("Gotta grab 'em while we fly!", width / 2, currentLineY + lineSpacing); } else if (introStep === 10) { text("Gotta grab 'em!", width / 2, currentLineY); textSize(baseTextSize * 1.2); text("They're MINE!", width / 2, currentLineY + lineSpacing); textSize(baseTextSize * 0.9); fill(kittyColor); text("...OURS, Master! OURS! ♥", width / 2, currentLineY + lineSpacing * 2); fill(textColor); textSize(baseTextSize); } else if (introStep === 11) { text("Use your finger to drag me left and right!", width / 2, currentLineY); text("Catch every single one!", width / 2, currentLineY + lineSpacing); } else if (introStep === 12) { text("Catch every single one!", width / 2, currentLineY); textSize(baseTextSize * 0.8); text("(Tap screen to start the ascent!)", width / 2, currentLineY + lineSpacing); } if (introStep < 12) { textSize(baseTextSize * 0.7); fill(200); text("[Tap to continue]", width / 2, height - lineSpacing * 0.7); } rectMode(CORNER); }
 
 // END OF PART 1
-// PART 2 of 2 - Revert to Full Screen Canvas! Nya!
+// PART 2 of 2 - Endless Mode Overhaul! Nya~!
 
-// Start Screen
-function displayStartScreen() { /* ... same ... */ fill(textColor); let titleSize = min(width, height) * 0.1; let instructionSize = titleSize * 0.5; let masterSize = instructionSize * 1.1; let tapSize = instructionSize * 0.9; let highScoreSize = tapSize * 0.9; textSize(titleSize); text("Kitty's Cuddle", width / 2, height * 0.25); text("Collection~♥", width / 2, height * 0.25 + titleSize * 1.1); textSize(instructionSize); text("Ready for Liftoff?", width / 2, height * 0.45); text("DRAG me left/right to catch plushies,", width/2, height*0.45 + instructionSize * 1.5); fill(kittyColor); textSize(masterSize); text("Master~!", width/2, height*0.45 + instructionSize * 1.5 + masterSize * 1.2); fill(textColor); textSize(tapSize); if (frameCount % 60 < 40) { text("Tap Anywhere to FLY!", width / 2, height * 0.7); } textSize(highScoreSize); fill(200); text(`High Score: ${highScore}`, width/2, height * 0.85); }
-// Game Over Cutscene Display
+// Start Screen - UPDATED High Score Display
+function displayStartScreen() {
+    fill(textColor);
+    let titleSize = min(width, height) * 0.1; let instructionSize = titleSize * 0.5;
+    let masterSize = instructionSize * 1.1; let tapSize = instructionSize * 0.9;
+    let highScoreSize = tapSize * 0.85; let endlessModeTextSize = highScoreSize; // Same size for button text
+
+    // Title & Instructions
+    textSize(titleSize); text("Kitty's Cuddle", width / 2, height * 0.18); // Adjusted Y
+    text("Collection~♥", width / 2, height * 0.18 + titleSize * 1.1);
+    textSize(instructionSize); text("Ready for Liftoff?", width / 2, height * 0.35); // Adjusted Y
+    text("DRAG me left/right to catch plushies,", width/2, height*0.35 + instructionSize * 1.5);
+    fill(kittyColor); textSize(masterSize); text("Master~!", width/2, height*0.35 + instructionSize * 1.5 + masterSize * 1.2);
+
+    // --- Draw Endless Mode Button ---
+    rectMode(CORNER); fill(endlessModeButtonColor); rect(endlessModeButton.x, endlessModeButton.y, endlessModeButton.w, endlessModeButton.h, 5);
+    textSize(endlessModeTextSize); textAlign(CENTER, CENTER);
+    if (isEndlessMode) { fill(endlessModeTextColorOn); text("Endless Mode: ON", endlessModeButton.x + endlessModeButton.w / 2, endlessModeButton.y + endlessModeButton.h / 2); fill(200); textSize(endlessModeTextSize * 0.7); text("(Score/Speed resets on Miss)", endlessModeButton.x + endlessModeButton.w / 2, endlessModeButton.y + endlessModeButton.h * 1.5); } // Updated text
+    else { fill(endlessModeTextColorOff); text("Endless Mode: OFF", endlessModeButton.x + endlessModeButton.w / 2, endlessModeButton.y + endlessModeButton.h / 2); }
+
+    // Tap to Fly Text
+    fill(textColor); textSize(tapSize); textAlign(CENTER, CENTER); if (frameCount % 60 < 40) { text("Tap Here or Above to FLY!", width / 2, height * 0.78); } // Adjusted Y
+
+    // --- Display BOTH High Scores ---
+    textSize(highScoreSize); fill(200);
+    text(`Normal High Score: ${highScore}`, width/2, height * 0.88); // Positioned lower
+    text(`Endless Streak High Score: ${endlessHighScore}`, width/2, height * 0.93); // Below normal high score
+}
+
+// Game Over Cutscene Display (No changes needed)
 function displayGameOverCutscene() { /* ... same ... */ let lineY = height * 0.2; let lineSpacing = min(width, height) * 0.05; let baseTextSize = lineSpacing * 0.7; let textBlockHeight = 0; let textBlockWidth = width * 0.85; let boxCenterY = height * 0.45; if (cutsceneStep <= 1) textBlockHeight = lineSpacing * 2.5; else if (cutsceneStep === 2) textBlockHeight = lineSpacing * 3.5; else if (cutsceneStep === 3) textBlockHeight = lineSpacing * 2.5; else if (cutsceneStep === 4) textBlockHeight = lineSpacing * 4; else if (cutsceneStep === 5) textBlockHeight = lineSpacing * 2.5; else textBlockHeight = lineSpacing * 3; fill(textBgColor); rectMode(CENTER); rect(width / 2, boxCenterY, textBlockWidth, textBlockHeight, 15); fill(textColor); textSize(baseTextSize); let currentLineY = boxCenterY - textBlockHeight / 2 + lineSpacing; if (cutsceneStep === 0) { text("*Phew...*", width / 2, currentLineY); text("That was a LOT of plushies...", width / 2, currentLineY + lineSpacing); } else if (cutsceneStep === 1) { text("I think... I think I got them all...?", width / 2, currentLineY); text("(Finally... peace and quiet...)", width / 2, currentLineY + lineSpacing); } else if (cutsceneStep === 2) { text("Wait... what's that noise?", width / 2, currentLineY); text("*Clatter! Crash!*", width/2, currentLineY + lineSpacing); text("Oh no... not AGAIN!", width / 2, currentLineY + lineSpacing * 2); } else if (cutsceneStep === 3) { text("KANA! DON'T TOUCH THAT--!", width / 2, currentLineY + lineSpacing); if(shakeTime <= 0) shakeTime = 15; } else if (cutsceneStep === 4) { textSize(baseTextSize * 1.8); fill(boomColor); text("*** KABOOOOOOM!!! ***", width / 2, currentLineY + lineSpacing * 1.5); textSize(baseTextSize); fill(textColor); for(let i=0; i<5; i++) { fill(random(plushieColors)); rect(random(width), random(height*0.6, height), 15, 15); } } else if (cutsceneStep === 5) { text("NYAAAAAAAAA!", width / 2, currentLineY); text("They're everywhere AGAIN!", width / 2, currentLineY + lineSpacing); } else if (cutsceneStep === 6) { text("They're everywhere AGAIN!", width / 2, currentLineY); textSize(baseTextSize * 0.8); text("(Tap to see your score... *sigh*)", width / 2, currentLineY + lineSpacing); } if (cutsceneStep < 6) { textSize(baseTextSize * 0.7); fill(200); text("[Tap to continue]", width / 2, height - lineSpacing * 0.7); } rectMode(CORNER); }
-// Game Over Screen
-function displayGameOverScreen() { /* ... same adjusted text ... */ fill(textColor); let gameOverSize = min(width, height) * 0.09; let messageSize = gameOverSize * 0.55; let scoreSize = messageSize * 0.9; let retrySize = scoreSize * 0.8; let lineSpacingFactor = 1.3; textSize(gameOverSize); let currentY = height * 0.15; let finalDifficultyStageNum = difficultyStage + 1; if (difficultyStage >= 5) { text("KITTY OVERLOAD!", width / 2, currentY); currentY += gameOverSize * lineSpacingFactor; textSize(messageSize); text(`You got ${score} adorable plushies!`, width / 2, currentY); currentY += messageSize * lineSpacingFactor; text(`Survived until Difficulty ${finalDifficultyStageNum}!`, width/2, currentY); currentY += messageSize * lineSpacingFactor; text("Truly Purrfect, Master!", width / 2, currentY); currentY += messageSize * lineSpacingFactor; fill(kittyColor); text("Our infinite hoard thanks you~♥", width / 2, currentY); } else if (difficultyStage === 4) { text("GALAXY MASTER!", width / 2, currentY); currentY += gameOverSize * lineSpacingFactor; textSize(messageSize); text(`You got ${score} cosmic plushies!`, width / 2, currentY); currentY += messageSize * lineSpacingFactor; text(`Conquered the Milky Way (Stage 5)!`, width/2, currentY); currentY += messageSize * lineSpacingFactor; text("So close to the kitties!", width / 2, currentY); currentY += messageSize * lineSpacingFactor; fill(kittyColor); text("Next time for sure~♥", width / 2, currentY); } else if (difficultyStage === 3) { text("SPACE EXPLORER!", width / 2, currentY); currentY += gameOverSize * lineSpacingFactor; textSize(messageSize); text(`You got ${score} plushies!`, width / 2, currentY); currentY += messageSize * lineSpacingFactor; text(`Reached Low Orbit (Stage 4)!`, width/2, currentY); currentY += messageSize * lineSpacingFactor; text("Almost interstellar!", width / 2, currentY); currentY += messageSize * lineSpacingFactor; fill(kittyColor); text("The galaxy awaits~♥", width / 2, currentY); } else if (difficultyStage === 2) { text("Atmosphere Ace!", width / 2, currentY); currentY += gameOverSize * lineSpacingFactor; textSize(messageSize); text(`You got ${score} plushies!`, width / 2, currentY); currentY += messageSize * lineSpacingFactor; text(`Touched the Stars (Stage 3)!`, width/2, currentY); currentY += messageSize * lineSpacingFactor; text("Getting higher!", width / 2, currentY); currentY += messageSize * lineSpacingFactor; fill(kittyColor); text("Space is close~♥", width / 2, currentY); } else if (difficultyStage === 1) { text("Cloud Hopper!", width / 2, currentY); currentY += gameOverSize * lineSpacingFactor; textSize(messageSize); text(`You got ${score} plushies!`, width / 2, currentY); currentY += messageSize * lineSpacingFactor; text(`Above the Clouds (Stage 2)!`, width/2, currentY); currentY += messageSize * lineSpacingFactor; text("Good flying!", width / 2, currentY); currentY += messageSize * lineSpacingFactor; fill(kittyColor); text("Keep climbing~♥", width / 2, currentY); } else { text("Grounded!", width / 2, currentY); currentY += gameOverSize * lineSpacingFactor; textSize(messageSize); text(`${score} plushies? Pathetic!`, width / 2, currentY); currentY += messageSize * lineSpacingFactor; text(`Stuck near the city (Stage 1)...`, width/2, currentY); currentY += messageSize * lineSpacingFactor; text("Need more practice!", width / 2, currentY); currentY += messageSize * lineSpacingFactor; fill(150, 0, 0); text("*Pouty Jetpack Sputters*", width/2, currentY); } currentY += messageSize * lineSpacingFactor * 1.5; textSize(scoreSize * 0.9); fill(200); text(`(High Score: ${highScore})`, width/2, currentY); fill(textColor); textSize(retrySize); if (frameCount % 60 < 40) { text("Tap Anywhere to Fly Again!", width / 2, height * 0.88); } }
-// HUD Display
-function displayHUD() { /* ... same ... */ let hudTextSize = min(width, height) * 0.04; let heartSize = hudTextSize * 1.3; fill(textColor); textSize(hudTextSize); textAlign(LEFT, TOP); text(`Plushies: ${score}`, 15, 15); textAlign(LEFT, TOP); text(`Stage: ${visualStage + 1}`, 15, 15 + hudTextSize * 1.2); textAlign(RIGHT, TOP); let hearts = ''; for (let i = 0; i < lives; i++) { hearts += '♥ '; } fill(heartColor); textSize(heartSize); text(hearts, width - 15, 10); textAlign(CENTER, CENTER); }
+
+// Game Over Screen - Clarified message is for Normal Mode
+function displayGameOverScreen() {
+    fill(textColor); let gameOverSize = min(width, height) * 0.09; let messageSize = gameOverSize * 0.55; let scoreSize = messageSize * 0.9; let retrySize = scoreSize * 0.8; let lineSpacingFactor = 1.3; let endlessModeMsgSize = retrySize * 0.9; textSize(gameOverSize); let currentY = height * 0.15; let finalDifficultyStageNum = difficultyStage + 1;
+
+    // Only show stage-based messages for Normal Mode game over
+    if (!isEndlessMode) {
+        if (difficultyStage >= 5) { /* Kitty Overload */ text("KITTY OVERLOAD!", width / 2, currentY); currentY += gameOverSize * lineSpacingFactor; textSize(messageSize); text(`You got ${score} adorable plushies!`, width / 2, currentY); currentY += messageSize * lineSpacingFactor; text(`Survived until Difficulty ${finalDifficultyStageNum}!`, width/2, currentY); currentY += messageSize * lineSpacingFactor; text("Truly Purrfect, Master!", width / 2, currentY); currentY += messageSize * lineSpacingFactor; fill(kittyColor); text("Our infinite hoard thanks you~♥", width / 2, currentY); }
+        else if (difficultyStage === 4) { /* Galaxy Master */ text("GALAXY MASTER!", width / 2, currentY); currentY += gameOverSize * lineSpacingFactor; textSize(messageSize); text(`You got ${score} cosmic plushies!`, width / 2, currentY); currentY += messageSize * lineSpacingFactor; text(`Conquered the Milky Way (Stage 5)!`, width/2, currentY); currentY += messageSize * lineSpacingFactor; text("So close to the kitties!", width / 2, currentY); currentY += messageSize * lineSpacingFactor; fill(kittyColor); text("Next time for sure~♥", width / 2, currentY); }
+        // ... (Other stage messages remain the same) ...
+        else { /* Grounded */ text("Grounded!", width / 2, currentY); currentY += gameOverSize * lineSpacingFactor; textSize(messageSize); text(`${score} plushies? Pathetic!`, width / 2, currentY); currentY += messageSize * lineSpacingFactor; text(`Stuck near the city (Stage 1)...`, width/2, currentY); currentY += messageSize * lineSpacingFactor; text("Need more practice!", width / 2, currentY); currentY += messageSize * lineSpacingFactor; fill(150, 0, 0); text("*Pouty Jetpack Sputters*", width/2, currentY); }
+    } else {
+        // If somehow game over is reached in endless (shouldn't happen), show generic message
+         text("Game Over?", width / 2, currentY); currentY += gameOverSize * lineSpacingFactor;
+         textSize(messageSize);
+         text("But... this was Endless Mode?", width / 2, currentY);
+    }
+
+
+    // Show High Score (Normal)
+    currentY += messageSize * lineSpacingFactor * 1.2; textSize(scoreSize * 0.9); fill(200);
+    text(`(Normal High Score: ${highScore})`, width/2, currentY);
+
+    // Retry Text
+    fill(textColor); textSize(retrySize); if (frameCount % 60 < 40) { text("Tap Anywhere to Fly Again!", width / 2, height * 0.88); }
+}
+
+// HUD Display - UPDATED for Streak Counter!
+function displayHUD() {
+    let hudTextSize = min(width, height) * 0.04;
+    let heartSize = hudTextSize * 1.3;
+    let backTextSize = hudTextSize * 0.9;
+    let streakTextSize = hudTextSize * 1.1; // Slightly larger for streak
+
+    // Score (Always shown, but resets in Endless)
+    fill(textColor); textSize(hudTextSize); textAlign(LEFT, TOP);
+    text(`Plushies: ${score}`, 15, 15);
+
+    // Stage (Shows visual stage, not difficulty stage)
+    textAlign(LEFT, TOP);
+    text(`Stage: ${visualStage + 1}`, 15, 15 + hudTextSize * 1.2);
+
+    // --- Lives (Normal Mode) OR Streak (Endless Mode) ---
+    textAlign(RIGHT, TOP);
+    if (isEndlessMode) {
+        fill(endlessModeTextColorOn); // Use yellow for streak
+        textSize(streakTextSize);
+        text(`Streak: ${currentStreak}`, width - 15, 10); // Display current streak
+    } else {
+        let hearts = '';
+        for (let i = 0; i < lives; i++) { hearts += '♥ '; }
+        fill(heartColor); textSize(heartSize);
+        text(hearts, width - 15, 10); // Display lives
+    }
+
+    // --- Draw Back Button if playing in Endless Mode ---
+    if (gameState === 'playing' && isEndlessMode) {
+        rectMode(CORNER); fill(backButtonColor); rect(backButton.x, backButton.y, backButton.w, backButton.h, 3);
+        fill(textColor); textSize(backTextSize); textAlign(CENTER, CENTER);
+        text("Back", backButton.x + backButton.w / 2, backButton.y + backButton.h / 2);
+    }
+
+    textAlign(CENTER, CENTER); // Reset alignment
+}
 
 // --- Helper Functions ---
 function spawnPlushie() { /* ... same ... */ if(!kitty) return; let plushieSize = kitty.size * 0.8; let spawnX = random(plushieSize, width - plushieSize); let plushie = { x: spawnX, y: -plushieSize, size: plushieSize, color: random(plushieColors), dx: random(-currentPlushieDrift, currentPlushieDrift) }; plushies.push(plushie); }
@@ -164,8 +421,49 @@ function drawPlushie(p) { /* ... same ... */ fill(p.color); stroke(50); strokeWe
 function checkCollision(player, obj) { /* ... same ... */ if(!player || !obj) return false; let kittyLeft = player.x - player.size / 2, kittyRight = player.x + player.size / 2; let kittyTop = player.y - player.size / 2, kittyBottom = player.y + player.size / 2; let plushieLeft = obj.x - obj.size / 2, plushieRight = obj.x + obj.size / 2; let plushieTop = obj.y - obj.size / 2, plushieBottom = obj.y + obj.size / 2; let noOverlap = kittyLeft > plushieRight || kittyRight < plushieLeft || kittyTop > plushieBottom || kittyBottom < plushieTop; return !noOverlap; }
 function isPointInKitty(px, py) { /* ... same ... */ if(!kitty) return false; let buffer = kitty.size * 0.5; let kittyLeft = kitty.x - kitty.size / 2 - buffer, kittyRight = kitty.x + kitty.size / 2 + buffer; let kittyTop = kitty.y - kitty.size / 2 - buffer, kittyBottom = kitty.y + kitty.size / 2 + buffer; return px >= kittyLeft && px <= kittyRight && py >= kittyTop && py <= kittyBottom; }
 
-// --- Input Handling --- (Sound file version) ---
-function handlePressStart() { /* ... same ... */ if (!userHasInteracted) { userHasInteracted = true; userStartAudio().then(() => { console.log("Audio context ready! Nyaa!"); audioStarted = true; }, (e) => { console.error("userStartAudio failed:", e); audioStarted = false; }); } if (gameState === 'intro') { if (introStep < 12) { if (introStep === 1) { shakeTime = 15; } else if (introStep === 5) { kitty.hasJetpack = true; } else { shakeTime = 0; } introStep++; } else { gameState = 'start'; } } else if (gameState === 'start') { kitty.hasJetpack = true; resetGame(); gameState = 'playing'; } else if (gameState === 'gameOverCutscene') { if (cutsceneStep < 6) { if (cutsceneStep === 2) { shakeTime = 15; } else if (cutsceneStep === 3) { shakeTime = 15;} else { shakeTime = 0; } cutsceneStep++; } else { gameState = 'gameOver'; } } else if (gameState === 'gameOver') { gameState = 'start'; } else if (gameState === 'playing') { let pressX, pressY; if (typeof mouseX !== 'undefined' && mouseIsPressed) { pressX = mouseX; pressY = mouseY; } else if (touches.length > 0) { pressX = touches[0].x; pressY = touches[0].y; } if (pressX !== undefined && isPointInKitty(pressX, pressY)) { isDragging = true; } } }
+// --- Input Handling --- (Checks Back button -> Endless Toggle -> Game Start/Drag) ---
+function handlePressStart() {
+    if (!userHasInteracted) { /* ... same audio start ... */ userHasInteracted = true; userStartAudio().then(() => { console.log("Audio context ready! Nyaa!"); audioStarted = true; }, (e) => { console.error("userStartAudio failed:", e); audioStarted = false; }); }
+
+    let pressX = mouseX; let pressY = mouseY;
+    if (touches.length > 0) { pressX = touches[0].x; pressY = touches[0].y; }
+
+    // --- Back Button Check (ONLY if playing in endless mode) ---
+    if (gameState === 'playing' && isEndlessMode) {
+        if (pressX >= backButton.x && pressX <= backButton.x + backButton.w &&
+            pressY >= backButton.y && pressY <= backButton.y + backButton.h)
+        {
+            console.log("Back button pressed!");
+            // --- Check and Save Endless High Score ---
+            if (highestStreakInSession > endlessHighScore) {
+                 endlessHighScore = highestStreakInSession;
+                 localStorage.setItem('kittyEndlessHighScore', endlessHighScore);
+                 console.log("New Endless High Score Saved:", endlessHighScore);
+            }
+            gameState = 'start'; // Go back to start screen
+            resetGame();       // Reset score, streak, etc.
+            return; // Stop processing this tap
+        }
+    }
+
+    // --- Endless Mode Button Check (ONLY on Start Screen) ---
+    if (gameState === 'start') {
+        if (pressX >= endlessModeButton.x && pressX <= endlessModeButton.x + endlessModeButton.w &&
+            pressY >= endlessModeButton.y && pressY <= endlessModeButton.y + endlessModeButton.h)
+        {
+            isEndlessMode = !isEndlessMode;
+            console.log("Endless Mode Toggled:", isEndlessMode);
+            return; // Stop processing this click/tap here
+        }
+    }
+
+    // Game state logic (if not clicking a button)
+    if (gameState === 'intro') { if (introStep < 12) { /* ... intro ... */ if (introStep === 1) { shakeTime = 15; } else if (introStep === 5) { kitty.hasJetpack = true; } else { shakeTime = 0; } introStep++; } else { gameState = 'start'; } }
+    else if (gameState === 'start') { kitty.hasJetpack = true; resetGame(); gameState = 'playing'; } // Starts game if not button
+    else if (gameState === 'gameOverCutscene') { if (cutsceneStep < 6) { /* ... cutscene ... */ if (cutsceneStep === 2) { shakeTime = 15; } else if (cutsceneStep === 3) { shakeTime = 15;} else { shakeTime = 0; } cutsceneStep++; } else { gameState = 'gameOver'; } }
+    else if (gameState === 'gameOver') { gameState = 'start'; }
+    else if (gameState === 'playing') { /* ... drag check ... */ if (pressX !== undefined && isPointInKitty(pressX, pressY)) { isDragging = true; } }
+}
 // Standard p5 mouse/touch listeners
 function mousePressed() { handlePressStart(); if (mouseX > 0 && mouseX < width && mouseY > 0 && mouseY < height) { return false; } }
 function touchStarted() { handlePressStart(); if (touches.length > 0 && touches[0].x > 0 && touches[0].x < width && touches[0].y > 0 && touches[0].y < height) { return false; } }
@@ -173,6 +471,23 @@ function mouseDragged() { if (isDragging && gameState === 'playing') { if(!kitty
 function touchMoved() { if (isDragging && gameState === 'playing') { if(!kitty) return; if (touches.length > 0) { kitty.x = touches[0].x; kitty.x = constrain(kitty.x, kitty.size / 2, width - kitty.size / 2); } } if (isDragging) { return false; } }
 function mouseReleased() { if (isDragging) { isDragging = false; } }
 function touchEnded() { if (isDragging) { isDragging = false; } }
-function resetGame() { score = 0; lives = 3; plushies = []; difficultyStage = 0; visualStage = 0; previousVisualStage = 0; if(kitty) kitty.x = width / 2; isDragging = false; frameCount = 0; shakeTime = 0; initializeBackgroundElements(); earthY = height * 1.5; /* Music handled by manageMusic */ lastDifficultyIncreaseScore = -1; currentEncouragingMessage = random(encouragingMessages); transitionStartTime = -Infinity; currentBgColor = skyColors[0]; targetBgColor = skyColors[0]; cutsceneStep = 0; }
+
+// resetGame - Added streak resets
+function resetGame() {
+    score = 0;
+    if (!isEndlessMode) lives = 3; // Only reset lives if NOT endless
+    plushies = [];
+    difficultyStage = 0; visualStage = 0; previousVisualStage = 0;
+    currentStreak = 0; // Reset current streak
+    highestStreakInSession = 0; // Reset highest streak for this session
+    if(kitty) kitty.x = width / 2;
+    isDragging = false; frameCount = 0; shakeTime = 0;
+    initializeBackgroundElements(); earthY = height * 1.5;
+    /* Music handled by manageMusic */
+    lastDifficultyIncreaseScore = -1; currentEncouragingMessage = random(encouragingMessages);
+    transitionStartTime = -Infinity; currentBgColor = skyColors[0]; targetBgColor = skyColors[0];
+    cutsceneStep = 0;
+    // isEndlessMode PERSISTS between resets unless toggled on start screen
+}
 
 // END OF PART 2
