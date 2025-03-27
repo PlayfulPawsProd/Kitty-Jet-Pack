@@ -1,25 +1,20 @@
 html, body {
   margin: 0;
   padding: 0;
-  width: 100vw; /* Use viewport width unit */
-  height: 100vh; /* Use viewport height unit */
+  width: 100%; /* Use 100% instead of vw/vh for body */
+  height: 100%;
   overflow: hidden; /* Keep preventing scrollbars */
-  display: flex; /* Use flexbox again for centering */
-  justify-content: center;
-  align-items: center;
-  background-color: #000; /* Black background for letterboxing */
+  display: block; /* Back to block */
+  background-color: #000; /* Black background if anything weird happens */
 }
 
 canvas {
-  display: block;
-  /* Use max values + object-fit to scale correctly */
-  max-width: 100vw;
-  max-height: 100vh;
-  width: auto;   /* Let browser decide based on aspect ratio */
-  height: auto;  /* Let browser decide based on aspect ratio */
-  object-fit: contain; /* Scale while maintaining aspect ratio */
+  display: block; /* Important! */
+  width: 100%;    /* Force canvas element width to fill container */
+  height: 100%;   /* Force canvas element height to fill container */
+  /* REMOVE object-fit - We are forcing the stretch now! */
 
-  /* Pixelated rendering attempts */
+  /* Keep image-rendering for sharpness */
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   image-rendering: -moz-crisp-edges;
