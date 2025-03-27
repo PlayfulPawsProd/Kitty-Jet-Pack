@@ -96,6 +96,92 @@ function setup() {
   defineButtonBounds();
 }
 
+// Add near top with other variables
+let storeButton;
+
+// INSIDE setup() - ADD this call AFTER loading other saved data
+loadPurchases(); // Call the function from store.js
+
+// INSIDE defineButtonBounds() - Add Store button bounds
+let storeButtonW = width * 0.35; let storeButtonH = height * 0.06;
+storeButton = { x: width / 2 - storeButtonW / 2, y: endlessModeButton.y + endlessButtonH * 1.8, w: storeButtonW, h: storeButtonH };
+
+// INSIDE draw() - Add the store state
+if (gameState === 'store') {
+    displayStore(); // Call function from store.js
+    // Don't run game logic or other displays
+}
+// Make sure other else if conditions exist for intro, start, playing, etc.
+
+// INSIDE handlePressStart() - Add store button check AND call handleStoreInput
+function handlePressStart() {
+    // ... (user interaction audio start) ...
+    let pressX = mouseX; let pressY = mouseY;
+    if (touches.length > 0) { /* ... get touch coords ... */ }
+
+    // --- Handle input based on state ---
+    if (gameState === 'store') {
+        handleStoreInput(pressX, pressY); // Delegate to store handler
+        return; // Stop processing here for store state
+    }
+    // --- Back Button Check (Playing state) ---
+    else if (gameState === 'playing' && isEndlessMode && backButton) { /* ... same ... */ }
+    // --- Endless Button Check (Start state) ---
+    else if (gameState === 'start' && endlessModeButton) { /* ... same ... */ }
+    // --- Store Button Check (Start state) --- ADD THIS BLOCK
+    else if (gameState === 'start' && storeButton) {
+         if (pressX >= storeButton.x && pressX <= storeButton.x + storeButton.w &&
+             pressY >= storeButton.y && pressY <= storeButton.y + storeButton.h)
+         {
+             console.log("Store button pressed! Entering store...");
+             gameState = 'store'; // Change game state to show store
+             // Ensure correct music plays/stops via manageMusic
+             return; // Don't start the game
+         }
+     }
+     // --- Other game state logic ---
+     else if (gameState === 'intro') { /* ... */ }
+     else if (gameState === 'start') { /* ... starts game if no button hit ... */ }
+     // etc...
+}
+
+// INSIDE runGame() - Update where totalPlushies is saved (optional, but safer)
+// Remove save from here: localStorage.setItem('kittyTotalPlushies', totalPlushiesCollected);
+// Keep save in resetGame() and when hitting Back button
+
+// INSIDE resetGame() - Keep the save here
+localStorage.setItem('kittyTotalPlushies', totalPlushiesCollected); // Save total when game restarts
+
+// In drawKitty() or other drawing functions, use isItemPurchased()
+// Example:
+function drawKitty(inCutscene = false) {
+    // ... other kitty drawing code ...
+    let currentKittyColor = kittyColor; // Default pink
+    if (isItemPurchased('kitty_color_black')) { // Check if black kitty skin is owned
+        currentKittyColor = color(50, 50, 50, 240); // Example black color
+        // Maybe later add logic for equipping specific skins if multiple are owned
+    }
+    fill(currentKittyColor); // Use the determined color
+    // ... rest of rect, ears, eyes, etc. using currentKittyColor implicitly if needed ...
+
+    // Example for Jetpack FX:
+    if (kitty.hasJetpack) {
+        // ... draw jetpack body ...
+        if (!inCutscene || cutsceneStep < 3 || cutsceneStep > 4) {
+            let flameSize = kitty.size * map(abs(kitty.bobOffset), 0, kitty.size * 0.05, 0.3, 0.6) * random(0.8, 1.2);
+            // Check for rainbow trail item
+            if (isItemPurchased('jetpack_rainbow')) {
+                 fill(random(100, 255), random(100, 255), random(100, 255), 180); // Rainbow flame!
+            } else {
+                 fill(255, random(150, 200), 0, 200); // Normal flame
+            }
+            noStroke();
+            // ... draw flame triangles ...
+        }
+    }
+    // ...
+}
+
 // --- Define Button Bounds ---
 function defineButtonBounds() { /* ... same ... */ let endlessButtonW = width * 0.45; let endlessButtonH = height * 0.07; endlessModeButton = { x: width / 2 - endlessButtonW / 2, y: height * 0.50, w: endlessButtonW, h: endlessButtonH }; let storeButtonW = width * 0.35; let storeButtonH = height * 0.06; storeButton = { x: width / 2 - storeButtonW / 2, y: endlessModeButton.y + endlessButtonH * 1.8, w: storeButtonW, h: storeButtonH }; let backButtonSize = min(width, height) * 0.1; backButton = { x: width - backButtonSize - 15, y: 15, w: backButtonSize, h: backButtonSize * 0.6 }; }
 
