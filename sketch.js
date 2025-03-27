@@ -1,11 +1,8 @@
 // ~~~ Kitty's Cuddle Collection: JETPACK GALAXY ADVENTURE! ~~~ //
-// Code for my Master~♥ Nyaa~! (Complete Sketch - Store Integration Attempt #2!)
-// PART 1 of 2 - Added safety checks, hoping to fix black screen! Nya!
+// Code for my Master~♥ Nyaa~! (Store Integration!)
+// PART 1 of 2 - Calling store functions! Nya!
 
-// Make sure p5.sound library is linked in your HTML file!
-// Make sure 'Skyward Whiskers.mp3' AND 'Skybound Quest.mp3' are uploaded!
-// Make sure 'store.js' is created and linked AFTER sketch.js in index.html!
-
+// ... (Keep all variable declarations and preload same as before) ...
 let kitty;
 let plushies = [];
 let score = 0;
@@ -13,30 +10,20 @@ let highScore = 0; let endlessHighScore = 0;
 let currentStreak = 0; let highestStreakInSession = 0;
 let totalPlushiesCollected = 0;
 let lives = 3;
-let gameState = 'intro';
-
+let gameState = 'intro'; // Can be: intro, start, playing, store, gameOverCutscene, gameOver
 let isDragging = false;
 let isEndlessMode = false;
-
-// --- Intro & Cutscene State Variables ---
 let introStep = 0; let cutsceneStep = 0; let shakeTime = 0;
-
-// --- Difficulty & Stage Variables ---
 let scorePerStage = 20;
 let visualStage = 0; let previousVisualStage = 0;
 let difficultyStage = 0;
 let maxVisualStageIndex = 5;
-
 let baseScrollSpeed = 1.5; let scrollSpeedIncreasePerStage = 0.6;
 let basePlushieFallSpeed = 3.0; let plushieSpeedIncreasePerStage = 0.7;
 let basePlushieSpawnInterval = 75; let spawnRateDecreasePerStage = 6;
 let minSpawnInterval = 18;
 let basePlushieDrift = 0.5; let driftIncreasePerStage = 0.3;
-
-// --- Dynamic Difficulty Values ---
 let currentScrollSpeed, currentPlushieFallSpeed, currentPlushieSpawnInterval, currentPlushieDrift;
-
-// --- Style Settings ---
 let kittyColor, jetpackColor, plushieColors = [];
 let heartColor, textColor, boomColor, sparkleColor, textBgColor;
 let skyColors = [], buildingColor, cloudColor, earthColor, earthContinentColor, galaxyColor1, galaxyColor2;
@@ -47,57 +34,33 @@ let backButtonColor;
 let storeButtonColor, storeButtonTextColor;
 let textStrokeColor;
 let hudTextColorLight, hudTextColorDark;
-
-// --- Background Transition ---
 let currentBgColor; let targetBgColor; let lerpSpeed = 0.03;
 let transitionStartTime = -Infinity; let transitionDuration = 90;
-
-// Background element arrays
 let stars = [], buildings = [], clouds = [], galaxyParticles = [];
 let earthY;
-
-// --- Encouraging Message ---
 let encouragingMessages = ["Keep Going!", "More Plushies!", "Nyaa~!", "Purrfect!", "You Got This!", "Don't Stop!", "For Master! ♥", "Faster!", "Wow!", "☆彡"];
 let currentEncouragingMessage = "";
 let lastDifficultyIncreaseScore = -1;
-
-// --- SOUND VARIABLES ---
 let bgMusic; let cutsceneMusic;
 let userHasInteracted = false; let audioStarted = false;
 let musicFadeTime = 0.5;
 let gameMusicVol = 0.5; let cutsceneMusicVol = 0.6;
-
-// --- Canvas Size ---
 let internalCanvasWidth = 600;
-
-// --- Button Bounds (Declared globally, defined in setup/resize) ---
 let endlessModeButton; let backButton; let storeButton;
 
-// --- Preload Function ---
-function preload() {
-  console.log("Preloading sound...");
-  // Error handling added directly in loadSound callbacks
-  bgMusic = loadSound('Skyward Whiskers.mp3',
-    () => console.log("Skyward Whiskers loaded successfully!"),
-    (e) => console.error("Error loading Skyward Whiskers:", e)
-  );
-  cutsceneMusic = loadSound('Skybound Quest.mp3',
-    () => console.log("Skybound Quest loaded successfully!"),
-    (e) => console.error("Error loading Skybound Quest:", e)
-  );
-}
+function preload() { /* ... same ... */ console.log("Preloading sound..."); bgMusic = loadSound('Skyward Whiskers.mp3', () => console.log("Skyward Whiskers loaded successfully!"), (e) => console.error("Error loading Skyward Whiskers:", e)); cutsceneMusic = loadSound('Skybound Quest.mp3', () => console.log("Skybound Quest loaded successfully!"), (e) => console.error("Error loading Skybound Quest:", e)); }
 
 function setup() {
   // --- Create Scaled Canvas ---
   let aspectRatio = windowHeight / windowWidth;
   let internalCanvasHeight = floor(internalCanvasWidth * aspectRatio);
-  internalCanvasHeight = max(1, internalCanvasHeight); // Prevent 0 height
+  internalCanvasHeight = max(1, internalCanvasHeight);
   createCanvas(internalCanvasWidth, internalCanvasHeight);
   console.log(`Canvas created at internal resolution: ${width}x${height}`);
 
   noSmooth(); textAlign(CENTER, CENTER); textFont('monospace');
 
-  // Colors (Ensure all color variables are defined before use)
+  // Colors
   kittyColor = color(255, 105, 180, 240); jetpackColor = color(150, 150, 150, 220); plushieColors = [ color(173, 216, 230, 220), color(255, 223, 186, 220), color(144, 238, 144, 220), color(221, 160, 221, 220) ]; heartColor = color(255, 0, 0); textColor = color(250, 250, 250); textBgColor = color(0, 0, 0, 165); boomColor = color(255, 50, 50); sparkleColor = color(255, 255, 100);
   skyColors = [ color(135, 206, 235), color(160, 215, 240), color(80, 130, 180), color(20, 40, 80), color(5, 5, 20) ]; buildingColor = color(50, 50, 60); cloudColor = color(255, 255, 255); earthColor = color(60, 120, 220); earthContinentColor = color(80, 180, 80); galaxyColor1 = color(200, 180, 255, 100); galaxyColor2 = color(255, 255, 255, 80);
   danceKittyBgColor = color(255, 235, 240); danceKittyColors = [ color(180, 255, 255, 40), color(255, 180, 255, 40), color(255, 255, 180, 40), color(180, 180, 255, 40) ];
@@ -108,7 +71,7 @@ function setup() {
   textStrokeColor = color(0, 0, 0, 150);
   hudTextColorLight = color(250, 250, 250); hudTextColorDark = color(40, 40, 40);
 
-  // Initialize kitty (AFTER canvas/colors are ready)
+  // Initialize kitty
   kitty = { baseY: height - 80, y: height - 80, size: min(width, height) * 0.08, x: width / 2, bobOffset: 0, hasJetpack: false };
 
   // Initialize background elements
@@ -120,34 +83,26 @@ function setup() {
   if (cutsceneMusic) { cutsceneMusic.setVolume(cutsceneMusicVol); }
 
   // Load High Scores & Total Plushies
-  // Use try-catch for localStorage in case it's blocked/unavailable
-  try {
-      let storedHighScore = localStorage.getItem('kittyJetpackHighScore'); if (storedHighScore) { highScore = int(storedHighScore); console.log("Loaded Normal High Score:", highScore); }
-      let storedEndlessHighScore = localStorage.getItem('kittyEndlessHighScore'); if (storedEndlessHighScore) { endlessHighScore = int(storedEndlessHighScore); console.log("Loaded Endless High Score:", endlessHighScore); }
-      let storedTotalPlushies = localStorage.getItem('kittyTotalPlushies'); if (storedTotalPlushies) { totalPlushiesCollected = int(storedTotalPlushies); console.log("Loaded Total Plushies:", totalPlushiesCollected); }
-  } catch (e) {
-      console.warn("Could not access localStorage:", e);
-      // Scores will default to 0 if loading fails
-  }
+  try { let storedHighScore = localStorage.getItem('kittyJetpackHighScore'); if (storedHighScore) { highScore = int(storedHighScore); console.log("Loaded Normal High Score:", highScore); } let storedEndlessHighScore = localStorage.getItem('kittyEndlessHighScore'); if (storedEndlessHighScore) { endlessHighScore = int(storedEndlessHighScore); console.log("Loaded Endless High Score:", endlessHighScore); } let storedTotalPlushies = localStorage.getItem('kittyTotalPlushies'); if (storedTotalPlushies) { totalPlushiesCollected = int(storedTotalPlushies); console.log("Loaded Total Plushies:", totalPlushiesCollected); } } catch (e) { console.warn("Could not access localStorage:", e); }
 
   // Select initial message & BG Color
   currentEncouragingMessage = random(encouragingMessages);
   currentBgColor = skyColors[0]; targetBgColor = skyColors[0];
 
-  // Define button bounds AFTER canvas size is known
+  // Define button bounds
   defineButtonBounds();
 
-  // Load purchases from store.js (Make sure store.js is loaded!)
-  if (typeof loadPurchases === 'function') {
-      loadPurchases();
-  } else {
-      console.error("Store.js or loadPurchases() function not found! Make sure store.js is linked AFTER sketch.js in index.html");
-  }
+  // Load purchases from store.js
+  if (typeof loadPurchases === 'function') { loadPurchases(); }
+  else { console.error("loadPurchases() function not found! Is store.js loaded correctly?"); }
+
+  // Call setupStoreLayout from store.js AFTER canvas is ready
+  if (typeof setupStoreLayout === 'function') { setupStoreLayout(width, height); }
+  else { console.error("setupStoreLayout() function not found!"); }
 }
 
-// --- Define Button Bounds ---
+// --- Define Button Bounds --- (Calls store layout setup)
 function defineButtonBounds() {
-    // Ensure width/height are valid before calculating bounds
     if (width && height) {
         let endlessButtonW = width * 0.45; let endlessButtonH = height * 0.07;
         endlessModeButton = { x: width / 2 - endlessButtonW / 2, y: height * 0.50, w: endlessButtonW, h: endlessButtonH };
@@ -155,28 +110,49 @@ function defineButtonBounds() {
         storeButton = { x: width / 2 - storeButtonW / 2, y: endlessModeButton.y + endlessButtonH * 1.8, w: storeButtonW, h: storeButtonH };
         let backButtonSize = min(width, height) * 0.1;
         backButton = { x: width - backButtonSize - 15, y: 15, w: backButtonSize, h: backButtonSize * 0.6 };
-    } else {
-        console.warn("defineButtonBounds called before canvas dimensions are ready.");
-        // Set defaults or leave undefined? Let's leave undefined for safety checks later.
-        endlessModeButton = undefined;
-        storeButton = undefined;
-        backButton = undefined;
-    }
+
+        // Call store layout setup whenever bounds might change
+        if (typeof setupStoreLayout === 'function') { setupStoreLayout(width, height); }
+
+    } else { console.warn("defineButtonBounds called before canvas dimensions are ready."); endlessModeButton = undefined; storeButton = undefined; backButton = undefined; }
 }
 
-
 // --- Music Control Function ---
-function manageMusic() { /* ... same ... */ if (!userHasInteracted || !audioStarted || !bgMusic || !cutsceneMusic) return; let targetGameVol = 0; let targetCutsceneVol = 0; let loopGame = false; let playCutsceneOnce = false; let restartCutscene = false; if (gameState === 'playing') { targetGameVol = gameMusicVol; targetCutsceneVol = 0; loopGame = true; } else if (gameState === 'intro' || gameState === 'start' || gameState === 'gameOverCutscene' || gameState === 'gameOver') { targetGameVol = 0; targetCutsceneVol = cutsceneMusicVol; if ((gameState === 'intro' || gameState === 'gameOverCutscene') && !cutsceneMusic.isPlaying()) { playCutsceneOnce = true; } if (gameState === 'start' && (lastGameState === 'gameOver' || lastGameState === 'gameOverCutscene')) { restartCutscene = true; } } else { targetGameVol = 0; targetCutsceneVol = 0; } try { if (bgMusic.isPlaying() || bgMusic.isLooping()) { if (targetGameVol < bgMusic.getVolume()) { bgMusic.setVolume(targetGameVol, musicFadeTime); if (targetGameVol === 0) { setTimeout(() => { if (bgMusic && !bgMusic.isLooping()) bgMusic.stop(); }, musicFadeTime * 1000 + 50); } } else if (targetGameVol > bgMusic.getVolume()) { bgMusic.setVolume(targetGameVol, musicFadeTime); } if (loopGame && !bgMusic.isLooping() && targetGameVol > 0) { bgMusic.loop(); } } else if (loopGame && targetGameVol > 0) { console.log("Starting Game Music loop with fade-in"); bgMusic.setVolume(0); bgMusic.loop(); bgMusic.setVolume(targetGameVol, musicFadeTime); } if (cutsceneMusic.isPlaying()) { if (targetCutsceneVol < cutsceneMusic.getVolume()) { cutsceneMusic.setVolume(targetCutsceneVol, musicFadeTime); if (targetCutsceneVol === 0) { setTimeout(() => { if (cutsceneMusic && cutsceneMusic.isPlaying()) cutsceneMusic.stop(); }, musicFadeTime * 1000 + 50); } } else if (targetCutsceneVol > cutsceneMusic.getVolume()) { cutsceneMusic.setVolume(targetCutsceneVol, musicFadeTime); } if (restartCutscene) { console.log("Restarting Cutscene music for Start screen loop"); cutsceneMusic.stop(); } } if ((playCutsceneOnce || restartCutscene) && targetCutsceneVol > 0 && !cutsceneMusic.isPlaying()) { console.log("Playing Cutscene music once with fade-in"); cutsceneMusic.setVolume(0); cutsceneMusic.play(); cutsceneMusic.setVolume(targetCutsceneVol, musicFadeTime); } else if ((gameState === 'gameOver' || gameState === 'start') && targetCutsceneVol > 0 && !cutsceneMusic.isPlaying()){ console.log("Restarting Cutscene music for Game Over/Start screen"); cutsceneMusic.setVolume(0); cutsceneMusic.play(); cutsceneMusic.setVolume(targetCutsceneVol, musicFadeTime); } } catch (e) { console.error("Error in manageMusic:", e); /* Attempt to stop music on error? */ try { bgMusic.stop(); cutsceneMusic.stop(); } catch (e2) {} } }
+function manageMusic() { /* ... same ... */ if (!userHasInteracted || !audioStarted || !bgMusic || !cutsceneMusic) return; let targetGameVol = 0; let targetCutsceneVol = 0; let loopGame = false; let playCutsceneOnce = false; let restartCutscene = false; if (gameState === 'playing') { targetGameVol = gameMusicVol; targetCutsceneVol = 0; loopGame = true; } else if (gameState === 'intro' || gameState === 'start' || gameState === 'gameOverCutscene' || gameState === 'gameOver' || gameState === 'store') { targetGameVol = 0; targetCutsceneVol = cutsceneMusicVol; if ((gameState === 'intro' || gameState === 'gameOverCutscene') && !cutsceneMusic.isPlaying()) { playCutsceneOnce = true; } if ((gameState === 'start' || gameState === 'store') && (lastGameState === 'gameOver' || lastGameState === 'gameOverCutscene' || lastGameState === 'playing' || lastGameState === 'intro')) { restartCutscene = true; } } else { targetGameVol = 0; targetCutsceneVol = 0; } try { if (bgMusic.isPlaying() || bgMusic.isLooping()) { if (targetGameVol < bgMusic.getVolume()) { bgMusic.setVolume(targetGameVol, musicFadeTime); if (targetGameVol === 0) { setTimeout(() => { if (bgMusic && !bgMusic.isLooping()) bgMusic.stop(); }, musicFadeTime * 1000 + 50); } } else if (targetGameVol > bgMusic.getVolume()) { bgMusic.setVolume(targetGameVol, musicFadeTime); } if (loopGame && !bgMusic.isLooping() && targetGameVol > 0) { bgMusic.loop(); } } else if (loopGame && targetGameVol > 0) { console.log("Starting Game Music loop with fade-in"); bgMusic.setVolume(0); bgMusic.loop(); bgMusic.setVolume(targetGameVol, musicFadeTime); } if (cutsceneMusic.isPlaying()) { if (targetCutsceneVol < cutsceneMusic.getVolume()) { cutsceneMusic.setVolume(targetCutsceneVol, musicFadeTime); if (targetCutsceneVol === 0) { setTimeout(() => { if (cutsceneMusic && cutsceneMusic.isPlaying()) cutsceneMusic.stop(); }, musicFadeTime * 1000 + 50); } } else if (targetCutsceneVol > cutsceneMusic.getVolume()) { cutsceneMusic.setVolume(targetCutsceneVol, musicFadeTime); } if (restartCutscene) { console.log("Restarting Cutscene music for Start/Store screen loop"); cutsceneMusic.stop(); } } if ((playCutsceneOnce || restartCutscene) && targetCutsceneVol > 0 && !cutsceneMusic.isPlaying()) { console.log("Playing Cutscene music once with fade-in"); cutsceneMusic.setVolume(0); cutsceneMusic.play(); cutsceneMusic.setVolume(targetCutsceneVol, musicFadeTime); } else if ((gameState === 'gameOver' || gameState === 'start' || gameState === 'store') && targetCutsceneVol > 0 && !cutsceneMusic.isPlaying()){ console.log("Restarting Cutscene music for Game Over/Start/Store screen"); cutsceneMusic.setVolume(0); cutsceneMusic.play(); cutsceneMusic.setVolume(targetCutsceneVol, musicFadeTime); } } catch (e) { console.error("Error in manageMusic:", e); try { bgMusic.stop(); cutsceneMusic.stop(); } catch (e2) {} } }
 
 
 // initializeBackgroundElements (No changes)
-function initializeBackgroundElements() { if(!width || !height) return; /* Safety Check */ stars = []; for (let i = 0; i < 300; i++) { stars.push({ x: random(width), y: random(height * 2), size: random(1, 3.5), speedFactor: random(0.05, 0.4) }); } buildings = []; let skyColorStage0 = skyColors[0]; for (let i = 0; i < 15; i++) { let far = random() < 0.5; let bldHeight = random(height * 0.1, height * (far ? 0.4 : 0.6)); let bldWidth = random(width * 0.04, width * 0.12); let finalColor = lerpColor(buildingColor, skyColorStage0, far ? 0.7 : 0.4); finalColor.setAlpha(far ? 160 : 200); buildings.push({ x: random(width * 1.2) - width * 0.1, h: bldHeight, w: bldWidth, y: random(height * 2), speedFactor: far ? 0.2 : 0.6, isRooftop: false, color: finalColor }); } clouds = []; for (let i = 0; i < 20; i++) { clouds.push({ x: random(width * 1.5) - width * 0.25, y: random(height * 2), size: random(width * 0.1, width * 0.4), speedFactor: random(0.3, 0.9), alpha: random(50, 150) }); } galaxyParticles = []; for (let i = 0; i < 400; i++) { galaxyParticles.push({ angle: random(TWO_PI), radius: random(height * 0.1, width * 0.8), speed: random(0.001, 0.005), size: random(1, 4), color: random() < 0.7 ? galaxyColor1 : galaxyColor2 }); } }
+function initializeBackgroundElements() { if(!width || !height) return; stars = []; for (let i = 0; i < 300; i++) { stars.push({ x: random(width), y: random(height * 2), size: random(1, 3.5), speedFactor: random(0.05, 0.4) }); } buildings = []; let skyColorStage0 = skyColors[0]; for (let i = 0; i < 15; i++) { let far = random() < 0.5; let bldHeight = random(height * 0.1, height * (far ? 0.4 : 0.6)); let bldWidth = random(width * 0.04, width * 0.12); let finalColor = lerpColor(buildingColor, skyColorStage0, far ? 0.7 : 0.4); finalColor.setAlpha(far ? 160 : 200); buildings.push({ x: random(width * 1.2) - width * 0.1, h: bldHeight, w: bldWidth, y: random(height * 2), speedFactor: far ? 0.2 : 0.6, isRooftop: false, color: finalColor }); } clouds = []; for (let i = 0; i < 20; i++) { clouds.push({ x: random(width * 1.5) - width * 0.25, y: random(height * 2), size: random(width * 0.1, width * 0.4), speedFactor: random(0.3, 0.9), alpha: random(50, 150) }); } galaxyParticles = []; for (let i = 0; i < 400; i++) { galaxyParticles.push({ angle: random(TWO_PI), radius: random(height * 0.1, width * 0.8), speed: random(0.001, 0.005), size: random(1, 4), color: random() < 0.7 ? galaxyColor1 : galaxyColor2 }); } }
 // windowResized (No changes)
 function windowResized() { let aspectRatio = windowHeight / windowWidth; let internalCanvasHeight = floor(internalCanvasWidth * aspectRatio); internalCanvasHeight = max(1, internalCanvasHeight); resizeCanvas(internalCanvasWidth, internalCanvasHeight); console.log(`Canvas resized to internal resolution: ${width}x${height}`); if (kitty) { kitty.baseY = height - 80; kitty.y = kitty.baseY; kitty.size = min(width, height) * 0.08; kitty.x = constrain(kitty.x, kitty.size / 2, width - kitty.size / 2); } else { console.warn("windowResized: kitty not ready yet."); } initializeBackgroundElements(); earthY = height * 1.5; defineButtonBounds(); }
 
-// draw (Added safety check for kitty object)
+// draw - ADDED 'store' state check
 let lastGameState = '';
-function draw() { try { /* Wrap main draw logic in try-catch */ let scrollSpeedForBackground = 0; previousVisualStage = visualStage; difficultyStage = floor(score / scorePerStage); if (isEndlessMode && gameState === 'playing') { visualStage = maxVisualStageIndex; } else { visualStage = min(maxVisualStageIndex, difficultyStage); } let startingEndless = (gameState === 'playing' && lastGameState !== 'playing' && isEndlessMode); if (visualStage !== previousVisualStage && gameState === 'playing' && !startingEndless) { transitionStartTime = frameCount; console.log(`Transitioning to visual stage ${visualStage}`); if (visualStage < maxVisualStageIndex) { targetBgColor = skyColors[visualStage]; } else if (isEndlessMode) { targetBgColor = endlessKittyBgColor; } else { targetBgColor = danceKittyBgColor; } } else if (startingEndless) { console.log("Snapping BG to Endless Mode color"); currentBgColor = endlessKittyBgColor; targetBgColor = endlessKittyBgColor; transitionStartTime = -Infinity; } else if (gameState !== 'playing') { transitionStartTime = -Infinity; if (gameState === 'start' || gameState === 'intro') { visualStage = 0; targetBgColor = skyColors[0]; currentBgColor = skyColors[0]; } else if (gameState === 'gameOverCutscene' || gameState === 'gameOver') { if (visualStage < maxVisualStageIndex) { currentBgColor = skyColors[visualStage]; } else if (isEndlessMode) { currentBgColor = endlessKittyBgColor; } else { currentBgColor = danceKittyBgColor; } targetBgColor = currentBgColor; } } else if (gameState === 'start' && previousVisualStage === 0) { currentBgColor = skyColors[0]; targetBgColor = skyColors[0]; } if (currentBgColor && targetBgColor) { currentBgColor = lerpColor(currentBgColor, targetBgColor, lerpSpeed); } currentScrollSpeed = baseScrollSpeed + difficultyStage * scrollSpeedIncreasePerStage; currentPlushieFallSpeed = basePlushieFallSpeed + difficultyStage * plushieSpeedIncreasePerStage; currentPlushieSpawnInterval = max(minSpawnInterval, basePlushieSpawnInterval - difficultyStage * spawnRateDecreasePerStage); currentPlushieDrift = basePlushieDrift + difficultyStage * driftIncreasePerStage; scrollSpeedForBackground = (visualStage === maxVisualStageIndex || gameState !== 'playing') ? 0 : currentScrollSpeed; if(gameState === 'start' || gameState === 'gameOver' || gameState === 'gameOverCutscene') scrollSpeedForBackground = baseScrollSpeed * 0.3; if(gameState === 'intro') scrollSpeedForBackground = 0; if (gameState === 'playing' && score > 0 && score % scorePerStage === 0 && score !== lastDifficultyIncreaseScore) { let lastMessage = currentEncouragingMessage; do { currentEncouragingMessage = random(encouragingMessages); } while (encouragingMessages.length > 1 && currentEncouragingMessage === lastMessage); lastDifficultyIncreaseScore = score; console.log("Difficulty Up! Message:", currentEncouragingMessage); } else if (score === 0) { lastDifficultyIncreaseScore = -1; } let transitionProgress = constrain(map(frameCount - transitionStartTime, 0, transitionDuration), 0, 1); drawScrollingBackground(visualStage, scrollSpeedForBackground, currentBgColor, transitionProgress, isEndlessMode); push(); if (shakeTime > 0) { translate(random(-6, 6), random(-6, 6)); shakeTime--; } if (gameState === 'intro') { displayIntro(); } else if (gameState === 'start') { displayStartScreen(); } else if (gameState === 'playing') { runGame(); } else if (gameState === 'gameOverCutscene') { displayGameOverCutscene(); } else if (gameState === 'gameOver') { displayGameOverScreen(); } manageMusic(); lastGameState = gameState; if (!(gameState === 'intro' && introStep < 4)) { if(kitty){ if (gameState !== 'gameOverCutscene') { kitty.bobOffset = sin(frameCount * 0.1) * (kitty.size * 0.05); kitty.y = kitty.baseY + kitty.bobOffset; } else { kitty.y = kitty.baseY; } drawKitty(gameState === 'gameOverCutscene'); } } pop(); } catch (e) { console.error("Error in draw():", e); noLoop(); /* Stop draw loop on critical error */ } }
+function draw() {
+ try {
+    let scrollSpeedForBackground = 0; previousVisualStage = visualStage; difficultyStage = floor(score / scorePerStage);
+    if (isEndlessMode && (gameState === 'playing' || gameState === 'gameOverCutscene' || gameState === 'gameOver')) { // Keep endless stage in game over too
+         visualStage = maxVisualStageIndex;
+    } else { visualStage = min(maxVisualStageIndex, difficultyStage); }
+    let startingEndless = (gameState === 'playing' && lastGameState !== 'playing' && isEndlessMode); if (visualStage !== previousVisualStage && gameState === 'playing' && !startingEndless) { transitionStartTime = frameCount; console.log(`Transitioning to visual stage ${visualStage}`); if (visualStage < maxVisualStageIndex) { targetBgColor = skyColors[visualStage]; } else if (isEndlessMode) { targetBgColor = endlessKittyBgColor; } else { targetBgColor = danceKittyBgColor; } } else if (startingEndless) { console.log("Snapping BG to Endless Mode color"); currentBgColor = endlessKittyBgColor; targetBgColor = endlessKittyBgColor; transitionStartTime = -Infinity; } else if (gameState !== 'playing') { transitionStartTime = -Infinity; if (gameState === 'start' || gameState === 'intro' || gameState === 'store') { visualStage = 0; targetBgColor = skyColors[0]; currentBgColor = skyColors[0]; } else if (gameState === 'gameOverCutscene' || gameState === 'gameOver') { if (visualStage < maxVisualStageIndex) { currentBgColor = skyColors[visualStage]; } else if (isEndlessMode) { currentBgColor = endlessKittyBgColor; } else { currentBgColor = danceKittyBgColor; } targetBgColor = currentBgColor; } } else if (gameState === 'start' && previousVisualStage === 0) { currentBgColor = skyColors[0]; targetBgColor = skyColors[0]; }
+    if (currentBgColor && targetBgColor) { currentBgColor = lerpColor(currentBgColor, targetBgColor, lerpSpeed); } else if(!currentBgColor && skyColors.length > 0){ currentBgColor = skyColors[0]; targetBgColor = skyColors[0]; /* Safety net */ }
+    currentScrollSpeed = baseScrollSpeed + difficultyStage * scrollSpeedIncreasePerStage; currentPlushieFallSpeed = basePlushieFallSpeed + difficultyStage * plushieSpeedIncreasePerStage; currentPlushieSpawnInterval = max(minSpawnInterval, basePlushieSpawnInterval - difficultyStage * spawnRateDecreasePerStage); currentPlushieDrift = basePlushieDrift + difficultyStage * driftIncreasePerStage; scrollSpeedForBackground = (visualStage === maxVisualStageIndex || gameState !== 'playing') ? 0 : currentScrollSpeed; if(gameState === 'start' || gameState === 'gameOver' || gameState === 'gameOverCutscene' || gameState === 'store') scrollSpeedForBackground = baseScrollSpeed * 0.3; if(gameState === 'intro') scrollSpeedForBackground = 0;
+    if (gameState === 'playing' && score > 0 && score % scorePerStage === 0 && score !== lastDifficultyIncreaseScore) { let lastMessage = currentEncouragingMessage; do { currentEncouragingMessage = random(encouragingMessages); } while (encouragingMessages.length > 1 && currentEncouragingMessage === lastMessage); lastDifficultyIncreaseScore = score; console.log("Difficulty Up! Message:", currentEncouragingMessage); } else if (score === 0) { lastDifficultyIncreaseScore = -1; }
+    let transitionProgress = constrain(map(frameCount - transitionStartTime, 0, transitionDuration), 0, 1); drawScrollingBackground(visualStage, scrollSpeedForBackground, currentBgColor, transitionProgress, isEndlessMode);
+    push(); if (shakeTime > 0) { translate(random(-6, 6), random(-6, 6)); shakeTime--; }
+    if (gameState === 'intro') { displayIntro(); }
+    else if (gameState === 'start') { displayStartScreen(); }
+    else if (gameState === 'playing') { runGame(); }
+    else if (gameState === 'store') { // <<< NEW STATE CHECK
+        if (typeof displayStore === 'function') { displayStore(); } else { console.error("displayStore not found!"); gameState='start';} // Fallback
+    }
+    else if (gameState === 'gameOverCutscene') { displayGameOverCutscene(); }
+    else if (gameState === 'gameOver') { displayGameOverScreen(); }
+    manageMusic(); lastGameState = gameState;
+    if (!(gameState === 'intro' && introStep < 4) && gameState !== 'store') { // Don't draw kitty in store
+        if(kitty){ if (gameState !== 'gameOverCutscene') { kitty.bobOffset = sin(frameCount * 0.1) * (kitty.size * 0.05); kitty.y = kitty.baseY + kitty.bobOffset; } else { kitty.y = kitty.baseY; } drawKitty(gameState === 'gameOverCutscene'); }
+    } pop(); } catch (e) { console.error("Error in draw():", e); noLoop(); }
+}
 
 // Separate Element Drawing Functions (No changes needed)
 function drawStage0Elements(scrollSpeed, alphaFactor) { buildings.forEach(b => { b.y += scrollSpeed * b.speedFactor; if (b.y > height) b.y -= height * 2; let c = b.color; fill(red(c), green(c), blue(c), alpha(c) * alphaFactor); rect(b.x, b.y, b.w, b.h); }); }
@@ -186,11 +162,11 @@ function drawStage3Elements(scrollSpeed, alphaFactor) { earthY += scrollSpeed * 
 function drawStage4Elements(scrollSpeed, alphaFactor) { stars.forEach(s => { s.y += scrollSpeed * s.speedFactor; if (s.y > height) s.y -= height * 2; let flicker = map(sin(frameCount * 0.1 + s.x + 50), -1, 1, 0.8, 1.4); fill(255, 255, 255, map(s.speedFactor, 0.05, 0.4, 180, 255) * alphaFactor); ellipse(s.x, s.y, s.size * flicker, s.size * flicker); }); push(); translate(width / 2, height / 2); rotate(frameCount * 0.001); galaxyParticles.forEach(p => { p.angle += p.speed; let x = cos(p.angle) * p.radius; let y = sin(p.angle) * p.radius * 0.3; let flicker = random(0.5, 1.5); let baseAlpha = alpha(p.color); fill(red(p.color), green(p.color), blue(p.color), baseAlpha * flicker * 0.8 * alphaFactor); ellipse(x, y, p.size * flicker, p.size * flicker); }); pop(); }
 function drawStage5Elements(alphaFactor, isEndless) { /* ... same subtle kitties ... */ let kittySize = 40; let spacing = kittySize * 1.5; let cols = ceil(width / spacing); let rows = ceil(height / spacing); let colorsToUse = isEndless ? endlessKittyColors : danceKittyColors; noStroke(); for (let i = 0; i < cols; i++) { for (let j = 0; j < rows; j++) { let x = i * spacing + spacing / 2; let y = j * spacing + spacing / 2; let wiggleX = sin(frameCount * 0.1 + i * 0.5 + j * 0.3) * 3; let wiggleY = cos(frameCount * 0.1 + i * 0.3 + j * 0.5) * 2; let kittyIndex = (i + j) % colorsToUse.length; let c = colorsToUse[kittyIndex]; fill(red(c), green(c), blue(c), alpha(c) * alphaFactor); rectMode(CENTER); rect(x + wiggleX, y + wiggleY, kittySize * 0.6, kittySize * 0.6); triangle(x + wiggleX - kittySize*0.3, y + wiggleY - kittySize*0.3, x + wiggleX - kittySize*0.3, y + wiggleY - kittySize*0.5, x + wiggleX - kittySize*0.1, y + wiggleY - kittySize*0.3); triangle(x + wiggleX + kittySize*0.3, y + wiggleY - kittySize*0.3, x + wiggleX + kittySize*0.3, y + wiggleY - kittySize*0.5, x + wiggleX + kittySize*0.1, y + wiggleY - kittySize*0.3); } } if (currentEncouragingMessage !== "") { fill(255, 255, 255, 60 * alphaFactor); textSize(min(width, height) * 0.15); textAlign(CENTER, CENTER); text(currentEncouragingMessage, width / 2, height / 2); } rectMode(CORNER); }
 
-// drawScrollingBackground (No changes)
+// drawScrollingBackground (No changes needed)
 function drawScrollingBackground(currentStageIndex, scrollSpeed, bgColor, transitionProgress, isEndless) { rectMode(CORNER); noStroke(); background(bgColor); let drawFuncs = [drawStage0Elements, drawStage1Elements, drawStage2Elements, drawStage3Elements, drawStage4Elements, drawStage5Elements]; let alphaValue = 1.0; if (transitionProgress < 1.0 && transitionStartTime > -Infinity) { alphaValue = transitionProgress; } if (drawFuncs[currentStageIndex]) { if (currentStageIndex === 5) { drawFuncs[currentStageIndex](alphaValue, isEndless); } else { drawFuncs[currentStageIndex](scrollSpeed, alphaValue); } } }
 
 // Gameplay Loop (No changes needed here)
-function runGame() { /* ... same endless miss logic ... */ if(!kitty) return; kitty.x = constrain(kitty.x, kitty.size / 2, width - kitty.size / 2); if (frameCount % floor(currentPlushieSpawnInterval) === 0) { spawnPlushie(); } for (let i = plushies.length - 1; i >= 0; i--) { let p = plushies[i]; p.y += currentScrollSpeed + currentPlushieFallSpeed * (height/600); p.x += p.dx; if (p.x < p.size / 2 || p.x > width - p.size / 2) { p.dx *= -0.9; p.x = constrain(p.x, p.size/2, width - p.size/2); } drawPlushie(p); if (checkCollision(kitty, p)) { score++; totalPlushiesCollected++; if (isEndlessMode) { currentStreak++; highestStreakInSession = max(highestStreakInSession, currentStreak); } plushies.splice(i, 1); } else if (p.y > height + p.size) { plushies.splice(i, 1); if (isEndlessMode) { console.log(`Endless Miss! Streak broken at ${currentStreak}. Score and speed reset.`); score = 0; difficultyStage = 0; currentStreak = 0; lastDifficultyIncreaseScore = -1; } else { lives--; console.log(`Life lost! ${lives} remaining.`); if (lives <= 0) { isDragging = false; if (score > highScore) { highScore = score; localStorage.setItem('kittyJetpackHighScore', highScore); console.log("New High Score saved!", highScore); } localStorage.setItem('kittyTotalPlushies', totalPlushiesCollected); if (visualStage === maxVisualStageIndex) { gameState = 'gameOverCutscene'; cutsceneStep = 0; console.log("Starting Game Over Cutscene!"); } else { gameState = 'gameOver'; } } } } } displayHUD(); }
+function runGame() { /* ... same endless miss logic ... */ if(!kitty) return; kitty.x = constrain(kitty.x, kitty.size / 2, width - kitty.size / 2); if (frameCount % floor(currentPlushieSpawnInterval) === 0) { spawnPlushie(); } for (let i = plushies.length - 1; i >= 0; i--) { let p = plushies[i]; p.y += currentScrollSpeed + currentPlushieFallSpeed * (height/600); p.x += p.dx; if (p.x < p.size / 2 || p.x > width - p.size / 2) { p.dx *= -0.9; p.x = constrain(p.x, p.size/2, width - p.size/2); } drawPlushie(p); if (checkCollision(kitty, p)) { score++; totalPlushiesCollected++; if (isEndlessMode) { currentStreak++; highestStreakInSession = max(highestStreakInSession, currentStreak); } plushies.splice(i, 1); } else if (p.y > height + p.size) { plushies.splice(i, 1); if (isEndlessMode) { console.log(`Endless Miss! Streak broken at ${currentStreak}. Score and speed reset.`); score = 0; difficultyStage = 0; currentStreak = 0; lastDifficultyIncreaseScore = -1; } else { lives--; console.log(`Life lost! ${lives} remaining.`); if (lives <= 0) { isDragging = false; if (score > highScore) { highScore = score; try { localStorage.setItem('kittyJetpackHighScore', highScore); console.log("New High Score saved!", highScore); } catch(e){ console.warn("Failed to save high score:", e); }} try { localStorage.setItem('kittyTotalPlushies', totalPlushiesCollected); } catch(e){ console.warn("Failed to save total plushies:", e); } if (visualStage === maxVisualStageIndex) { gameState = 'gameOverCutscene'; cutsceneStep = 0; console.log("Starting Game Over Cutscene!"); } else { gameState = 'gameOver'; } } } } } displayHUD(); }
 
 // --- Screen Displays ---
 
@@ -200,36 +176,29 @@ function displayIntro() { /* ... same ... */ let lineY = height * 0.2; let lineS
 // END OF PART 1
 // PART 2 of 2 - Black Screen Safety Checks! Nya!
 
-// Start Screen - UPDATED Text Readability & Button Size!
+// Start Screen (Final Polish)
 function displayStartScreen() {
     fill(textColor); stroke(textStrokeColor); strokeWeight(2.5);
 
-    let titleSize = min(width, height) * 0.095;
-    let instructionSize = titleSize * 0.5;
-    let masterSize = instructionSize * 1.1;
-    let tapSize = instructionSize * 0.85;
-    let highScoreSize = tapSize * 0.90;
-    let totalPlushieSize = highScoreSize * 0.9;
-    let buttonTextSize = instructionSize * 0.75; // Keep button text smaller
-    let lineSpacingFactor = 1.2;
+    let titleSize = min(width, height) * 0.095; let instructionSize = titleSize * 0.5;
+    let masterSize = instructionSize * 1.1; let tapSize = instructionSize * 0.85;
+    let highScoreSize = tapSize * 0.90; let totalPlushieSize = highScoreSize * 0.9;
+    let buttonTextSize = instructionSize * 0.75; let lineSpacingFactor = 1.2;
 
     // Title
-    textSize(titleSize);
-    text("Kitty's Cuddle", width / 2, height * 0.18);
-    text("Collection~♥", width / 2, height * 0.18 + titleSize * lineSpacingFactor);
+    textSize(titleSize); text("Kitty's Cuddle", width / 2, height * 0.18); text("Collection~♥", width / 2, height * 0.18 + titleSize * lineSpacingFactor);
 
     // Instructions
-    let instructionY = height * 0.18 + titleSize * lineSpacingFactor * 2.2;
-    textSize(instructionSize);
+    let instructionY = height * 0.18 + titleSize * lineSpacingFactor * 2.2; textSize(instructionSize);
     text("Ready for Liftoff?", width / 2, instructionY); instructionY += instructionSize * lineSpacingFactor;
     text("DRAG me left/right", width / 2, instructionY); instructionY += instructionSize * lineSpacingFactor * 0.9;
     text("to catch plushies,", width/2, instructionY); instructionY += instructionSize * lineSpacingFactor * 1.3;
     fill(kittyColor); textSize(masterSize); stroke(textStrokeColor); strokeWeight(2.5);
     text("Master~!", width/2, instructionY); instructionY += masterSize * lineSpacingFactor * 1.2;
 
-    // Ensure button object exists before drawing
+    // --- Draw Endless Mode Button --- (Ensure object exists)
     if (endlessModeButton) {
-        endlessModeButton.y = instructionY; // Position based on text above
+        endlessModeButton.y = instructionY;
         rectMode(CORNER); fill(endlessModeButtonColor); noStroke();
         rect(endlessModeButton.x, endlessModeButton.y, endlessModeButton.w, endlessModeButton.h, 5);
         textSize(buttonTextSize); textAlign(CENTER, CENTER); stroke(textStrokeColor); strokeWeight(1.5);
@@ -239,7 +208,7 @@ function displayStartScreen() {
         if (isEndlessMode) { noStroke(); fill(200); textSize(buttonTextSize * 0.8); text("(Score/Speed resets on Miss)", width / 2, instructionY); instructionY += buttonTextSize * 0.8 * lineSpacingFactor; }
     }
 
-    // Ensure button object exists before drawing
+     // --- Draw Store Button --- (Ensure object exists)
     if (storeButton) {
         storeButton.y = instructionY;
         rectMode(CORNER); fill(storeButtonColor); noStroke();
@@ -282,63 +251,51 @@ function drawPlushie(p) { /* ... same ... */ fill(p.color); stroke(50); strokeWe
 function checkCollision(player, obj) { /* ... same ... */ if(!player || !obj) return false; let kittyLeft = player.x - player.size / 2, kittyRight = player.x + player.size / 2; let kittyTop = player.y - player.size / 2, kittyBottom = player.y + player.size / 2; let plushieLeft = obj.x - obj.size / 2, plushieRight = obj.x + obj.size / 2; let plushieTop = obj.y - obj.size / 2, plushieBottom = obj.y + obj.size / 2; let noOverlap = kittyLeft > plushieRight || kittyRight < plushieLeft || kittyTop > plushieBottom || kittyBottom < plushieTop; return !noOverlap; }
 function isPointInKitty(px, py) { /* ... same ... */ if(!kitty) return false; let buffer = kitty.size * 0.5; let kittyLeft = kitty.x - kitty.size / 2 - buffer, kittyRight = kitty.x + kitty.size / 2 + buffer; let kittyTop = kitty.y - kitty.size / 2 - buffer, kittyBottom = kitty.y + kitty.size / 2 + buffer; return px >= kittyLeft && px <= kittyRight && py >= kittyTop && py <= kittyBottom; }
 
-// --- Input Handling --- (Added safety checks for buttons) ---
+// --- Input Handling --- (Added safety checks) ---
 function handlePressStart() {
-    if (!userHasInteracted) { /* ... */ userHasInteracted = true; userStartAudio().then(() => { console.log("Audio context ready! Nyaa!"); audioStarted = true; }, (e) => { console.error("userStartAudio failed:", e); audioStarted = false; }); }
+    if (!userHasInteracted) { /* ... audio start ... */ userHasInteracted = true; userStartAudio().then(() => { console.log("Audio context ready! Nyaa!"); audioStarted = true; }, (e) => { console.error("userStartAudio failed:", e); audioStarted = false; }); }
 
     let pressX = mouseX; let pressY = mouseY;
-    if (touches.length > 0) { if(touches[0]){ pressX = touches[0].x; pressY = touches[0].y; } else { return; } } // Added check for touches[0]
+    if (touches.length > 0) { if(touches[0]){ pressX = touches[0].x; pressY = touches[0].y; } else { return; } } // Check if touches[0] exists
 
-    // Safety checks: ensure buttons are defined before checking clicks
+    // Check buttons ONLY if they are defined (safer)
     let endlessButtonDefined = (typeof endlessModeButton !== 'undefined' && endlessModeButton !== null);
     let storeButtonDefined = (typeof storeButton !== 'undefined' && storeButton !== null);
     let backButtonDefined = (typeof backButton !== 'undefined' && backButton !== null);
 
+    // Back Button Check
+    if (gameState === 'playing' && isEndlessMode && backButtonDefined) { if (pressX >= backButton.x && pressX <= backButton.x + backButton.w && pressY >= backButton.y && pressY <= backButton.y + backButton.h) { /* ... save scores, reset ... */ console.log("Back button pressed!"); if (highestStreakInSession > endlessHighScore) { endlessHighScore = highestStreakInSession; try { localStorage.setItem('kittyEndlessHighScore', endlessHighScore); console.log("New Endless High Score Saved:", endlessHighScore); } catch(e){ console.warn("Failed to save endless high score:", e); } } try { localStorage.setItem('kittyTotalPlushies', totalPlushiesCollected); } catch(e){ console.warn("Failed to save total plushies:", e); } gameState = 'start'; resetGame(); return; } }
 
-    // --- Back Button Check ---
-    if (gameState === 'playing' && isEndlessMode && backButtonDefined) { if (pressX >= backButton.x && pressX <= backButton.x + backButton.w && pressY >= backButton.y && pressY <= backButton.y + backButton.h) { console.log("Back button pressed!"); if (highestStreakInSession > endlessHighScore) { endlessHighScore = highestStreakInSession; try { localStorage.setItem('kittyEndlessHighScore', endlessHighScore); console.log("New Endless High Score Saved:", endlessHighScore); } catch(e){ console.warn("Failed to save endless high score:", e); } } try { localStorage.setItem('kittyTotalPlushies', totalPlushiesCollected); } catch(e){ console.warn("Failed to save total plushies:", e); } gameState = 'start'; resetGame(); return; } }
-
-    // --- Endless Mode & Store Button Check ---
+    // Start Screen Buttons
     if (gameState === 'start') {
         if (endlessButtonDefined && pressX >= endlessModeButton.x && pressX <= endlessModeButton.x + endlessModeButton.w && pressY >= endlessModeButton.y && pressY <= endlessModeButton.y + endlessModeButton.h) { isEndlessMode = !isEndlessMode; console.log("Endless Mode Toggled:", isEndlessMode); return; }
-        if (storeButtonDefined && pressX >= storeButton.x && pressX <= storeButton.x + storeButton.w && pressY >= storeButton.y && pressY <= storeButton.y + storeButton.h) { console.log("Store button pressed! (Coming Soon... Nya~!)"); gameState = 'store'; return; } // Go to store state
+        if (storeButtonDefined && pressX >= storeButton.x && pressX <= storeButton.x + storeButton.w && pressY >= storeButton.y && pressY <= storeButton.y + storeButton.h) { console.log("Store button pressed! Entering store..."); gameState = 'store'; return; }
     }
 
-    // --- Store State Input ---
-    if (gameState === 'store') {
-        // Check if store input handler exists (from store.js)
-        if (typeof handleStoreInput === 'function') {
-             handleStoreInput(pressX, pressY);
-        } else {
-            console.warn("handleStoreInput function not found! Switching back to start.");
-            gameState = 'start'; // Fallback if store code isn't loaded
-        }
-        return; // Don't process other game state changes
-    }
+    // Store Input
+    if (gameState === 'store') { if (typeof handleStoreInput === 'function') { handleStoreInput(pressX, pressY); } else { console.warn("handleStoreInput function not found! Switching back to start."); gameState = 'start'; } return; }
 
-    // Game state logic
+    // Game state logic (if not clicking a specific interactive button)
     if (gameState === 'intro') { if (introStep < 12) { /* ... */ if (introStep === 1) { shakeTime = 15; } else if (introStep === 5) { kitty.hasJetpack = true; } else { shakeTime = 0; } introStep++; } else { gameState = 'start'; } }
-    else if (gameState === 'start') { kitty.hasJetpack = true; resetGame(); gameState = 'playing'; }
+    else if (gameState === 'start') { kitty.hasJetpack = true; resetGame(); gameState = 'playing'; } // Only gets here if didn't hit a button
     else if (gameState === 'gameOverCutscene') { if (cutsceneStep < 6) { /* ... */ if (cutsceneStep === 2) { shakeTime = 15; } else if (cutsceneStep === 3) { shakeTime = 15;} else { shakeTime = 0; } cutsceneStep++; } else { gameState = 'gameOver'; } }
     else if (gameState === 'gameOver') { gameState = 'start'; }
     else if (gameState === 'playing') { /* ... drag check ... */ if (pressX !== undefined && kitty && isPointInKitty(pressX, pressY)) { isDragging = true; } }
 }
 // Standard p5 mouse/touch listeners
 function mousePressed() { handlePressStart(); if (mouseX > 0 && mouseX < width && mouseY > 0 && mouseY < height) { return false; } }
-function touchStarted() { handlePressStart(); if (touches.length > 0 && touches[0] && touches[0].x > 0 && touches[0].x < width && touches[0].y > 0 && touches[0].y < height) { return false; } } // Added touches[0] check
+function touchStarted() { handlePressStart(); if (touches.length > 0 && touches[0] && touches[0].x > 0 && touches[0].x < width && touches[0].y > 0 && touches[0].y < height) { return false; } }
 function mouseDragged() { if (isDragging && gameState === 'playing') { if(!kitty) return; kitty.x = mouseX; kitty.x = constrain(kitty.x, kitty.size / 2, width - kitty.size / 2); } if (isDragging) { return false; } }
-function touchMoved() { if (isDragging && gameState === 'playing') { if(!kitty) return; if (touches.length > 0 && touches[0]) { kitty.x = touches[0].x; kitty.x = constrain(kitty.x, kitty.size / 2, width - kitty.size / 2); } } if (isDragging) { return false; } } // Added touches[0] check
+function touchMoved() { if (isDragging && gameState === 'playing') { if(!kitty) return; if (touches.length > 0 && touches[0]) { kitty.x = touches[0].x; kitty.x = constrain(kitty.x, kitty.size / 2, width - kitty.size / 2); } } if (isDragging) { return false; } }
 function mouseReleased() { if (isDragging) { isDragging = false; } }
 function touchEnded() { if (isDragging) { isDragging = false; } }
 
-// resetGame (Save Total Plushies on reset - safer check)
+// resetGame (Added save check)
 function resetGame() {
-    // Save total plushies if score/streak increased during the session
      if (lastGameState === 'playing' && (score > 0 || highestStreakInSession > 0)) {
         try { localStorage.setItem('kittyTotalPlushies', totalPlushiesCollected); console.log("Total plushies saved on reset:", totalPlushiesCollected); }
         catch(e){ console.warn("Failed to save total plushies:", e); }
      }
-
     score = 0; if (!isEndlessMode) lives = 3; plushies = []; difficultyStage = 0; visualStage = 0; previousVisualStage = 0; currentStreak = 0; highestStreakInSession = 0; if(kitty) kitty.x = width / 2; isDragging = false; frameCount = 0; shakeTime = 0; initializeBackgroundElements(); earthY = height * 1.5; /* Music handled by manageMusic */ lastDifficultyIncreaseScore = -1; currentEncouragingMessage = random(encouragingMessages); transitionStartTime = -Infinity; if(skyColors && skyColors.length > 0) { currentBgColor = skyColors[0]; targetBgColor = skyColors[0]; } cutsceneStep = 0;
 }
 
