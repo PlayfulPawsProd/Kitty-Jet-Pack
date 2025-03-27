@@ -1,5 +1,5 @@
 // ~~~ Kitty's Cuddle Collection: JETPACK GALAXY ADVENTURE! ~~~ //
-// Code for my Master~♥ Nyaa~! (FINAL UI POLISH!)
+// Update for my Master~♥ Nyaa~! (FINAL UI POLISH!)
 // PART 1 of 2 - Fixing HUD overlap, text visibility & button fit! Nya!
 
 // Make sure p5.sound library is linked in your HTML file!
