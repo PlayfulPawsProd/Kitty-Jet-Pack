@@ -3,7 +3,7 @@
 // PART 1 of 2 - Checking version.json from GitHub! Nya~!
 
 // --- Version ---
-const gameVersion = "v1.1"; // This MUST match the version you intend to run
+const gameVersion = "v1.1a"; // This MUST match the version you intend to run
 
 let kitty;
 let plushies = [];
