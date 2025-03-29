@@ -1,14 +1,12 @@
 // ~~~ Kitty's Cuddle Collection: JETPACK GALAXY ADVENTURE! ~~~ //
-// Code for my Master~♥ Nyaa~! (Rainbow Trail code moved to rainbow.js!)
-// PART 1 of 2 - Main sketch file, cleaner now! Nya!
+// Code for my Master~♥ Nyaa~! (Higher Flight Path!)
+// PART 1 of 2 - Flying higher to show off the trail! Nyaa~!
 
-// --- Version ---
-const gameVersion = "v1.12b"; // This MUST match the version you intend to run
+const gameVersion = "v1.12c";
 
 let kitty;
 let plushies = [];
-let score = 0;
-let highScore = 0; let endlessHighScore = 0;
+let score = 0; let highScore = 0; let endlessHighScore = 0;
 let currentStreak = 0; let highestStreakInSession = 0;
 let totalPlushiesCollected = 0;
 let lives = 3;
@@ -34,7 +32,7 @@ let basePlushieDrift = 0.5; let driftIncreasePerStage = 0.3;
 // --- Dynamic Difficulty Values ---
 let currentScrollSpeed, currentPlushieFallSpeed, currentPlushieSpawnInterval, currentPlushieDrift;
 
-// --- Style Settings --- (Defined using standard RGB or p5 color names)
+// --- Style Settings ---
 let kittyColor, jetpackColor, plushieColors = [];
 let heartColor, textColor, boomColor, sparkleColor, textBgColor;
 let skyColors = [], buildingColor, cloudColor, earthColor, earthContinentColor, galaxyColor1, galaxyColor2;
@@ -67,9 +65,6 @@ let internalCanvasWidth = 600;
 // --- Button Bounds ---
 let endlessModeButton; let backButton; let storeButton; let updateButton;
 
-// --- Update Check State ---
-let updateButtonState = 'idle'; let updateButtonText = "Check Updates"; let updateCheckTimeout;
-
 // --- Preload Function ---
 function preload() { /* ... same ... */ console.log("Preloading sound..."); bgMusic = loadSound('Skyward Whiskers.mp3', () => console.log("Skyward Whiskers loaded successfully!"), (e) => console.error("Error loading Skyward Whiskers:", e)); cutsceneMusic = loadSound('Skybound Quest.mp3', () => console.log("Skybound Quest loaded successfully!"), (e) => console.error("Error loading Skybound Quest:", e)); }
 
@@ -79,7 +74,7 @@ function setup() {
     let internalCanvasHeight = floor(internalCanvasWidth * aspectRatio);
     internalCanvasHeight = max(1, internalCanvasHeight);
     createCanvas(internalCanvasWidth, internalCanvasHeight);
-    // Keep default RGB color mode
+    colorMode(RGB); // Keep default RGB
     console.log(`Canvas created at internal resolution: ${width}x${height}, Color Mode: RGB`);
 
     noSmooth(); textAlign(CENTER, CENTER); textFont('monospace');
@@ -94,8 +89,9 @@ function setup() {
     updateButtonColor = color(80, 80, 150, 180); updateButtonTextColor = color(200); updateAvailableColor = color(200, 150, 50, 200);
     textStrokeColor = color(0, 0, 0, 150); hudTextColorLight = color(250, 250, 250); hudTextColorDark = color(40, 40, 40);
 
-    // Initialize kitty
-    kitty = { baseY: height - 80, y: height - 80, size: min(width, height) * 0.08, x: width / 2, bobOffset: 0, hasJetpack: false };
+    // --- Initialize kitty - HIGHER POSITION! ---
+    // Position kitty roughly 2/3rds down the screen
+    kitty = { baseY: height * 0.66, y: height * 0.66, size: min(width, height) * 0.08, x: width / 2, bobOffset: 0, hasJetpack: false };
 
     // Initialize background elements
     initializeBackgroundElements();
@@ -127,52 +123,32 @@ function defineButtonBounds() { /* ... same ... */ if (width && height) { let en
 // --- Music Control Function ---
 function manageMusic() { /* ... same ... */ if (!userHasInteracted || !audioStarted || !bgMusic || !cutsceneMusic) return; let targetGameVol = 0; let targetCutsceneVol = 0; let loopGame = false; let playCutsceneOnce = false; let restartCutscene = false; if (gameState === 'playing') { targetGameVol = gameMusicVol; targetCutsceneVol = 0; loopGame = true; } else if (gameState === 'intro' || gameState === 'start' || gameState === 'gameOverCutscene' || gameState === 'gameOver' || gameState === 'store') { targetGameVol = 0; targetCutsceneVol = cutsceneMusicVol; if ((gameState === 'intro' || gameState === 'gameOverCutscene') && !cutsceneMusic.isPlaying()) { playCutsceneOnce = true; } if ((gameState === 'start' || gameState === 'store') && (lastGameState === 'gameOver' || lastGameState === 'gameOverCutscene' || lastGameState === 'playing' || lastGameState === 'intro')) { restartCutscene = true; } } else { targetGameVol = 0; targetCutsceneVol = 0; } try { if (bgMusic.isPlaying() || bgMusic.isLooping()) { if (targetGameVol < bgMusic.getVolume()) { bgMusic.setVolume(targetGameVol, musicFadeTime); if (targetGameVol === 0) { setTimeout(() => { if (bgMusic && !bgMusic.isLooping()) bgMusic.stop(); }, musicFadeTime * 1000 + 50); } } else if (targetGameVol > bgMusic.getVolume()) { bgMusic.setVolume(targetGameVol, musicFadeTime); } if (loopGame && !bgMusic.isLooping() && targetGameVol > 0) { bgMusic.loop(); } } else if (loopGame && targetGameVol > 0) { console.log("Starting Game Music loop with fade-in"); bgMusic.setVolume(0); bgMusic.loop(); bgMusic.setVolume(targetGameVol, musicFadeTime); } if (cutsceneMusic.isPlaying()) { if (targetCutsceneVol < cutsceneMusic.getVolume()) { cutsceneMusic.setVolume(targetCutsceneVol, musicFadeTime); if (targetCutsceneVol === 0) { setTimeout(() => { if (cutsceneMusic && cutsceneMusic.isPlaying()) cutsceneMusic.stop(); }, musicFadeTime * 1000 + 50); } } else if (targetCutsceneVol > cutsceneMusic.getVolume()) { cutsceneMusic.setVolume(targetCutsceneVol, musicFadeTime); } if (restartCutscene) { console.log("Restarting Cutscene music for Start/Store screen loop"); cutsceneMusic.stop(); } } if ((playCutsceneOnce || restartCutscene) && targetCutsceneVol > 0 && !cutsceneMusic.isPlaying()) { console.log("Playing Cutscene music once with fade-in"); cutsceneMusic.setVolume(0); cutsceneMusic.play(); cutsceneMusic.setVolume(targetCutsceneVol, musicFadeTime); } else if ((gameState === 'gameOver' || gameState === 'start' || gameState === 'store') && targetCutsceneVol > 0 && !cutsceneMusic.isPlaying()){ console.log("Restarting Cutscene music for Game Over/Start/Store screen"); cutsceneMusic.setVolume(0); cutsceneMusic.play(); cutsceneMusic.setVolume(targetCutsceneVol, musicFadeTime); } } catch (e) { console.error("Error in manageMusic:", e); try { bgMusic.stop(); cutsceneMusic.stop(); } catch (e2) {} } }
 
-
 // initializeBackgroundElements (No changes)
 function initializeBackgroundElements() { /* ... same ... */ if(!width || !height) return; stars = []; for (let i = 0; i < 300; i++) { stars.push({ x: random(width), y: random(height * 2), size: random(1, 3.5), speedFactor: random(0.05, 0.4) }); } buildings = []; let skyColorStage0 = skyColors[0]; for (let i = 0; i < 15; i++) { let far = random() < 0.5; let bldHeight = random(height * 0.1, height * (far ? 0.4 : 0.6)); let bldWidth = random(width * 0.04, width * 0.12); let finalColor = lerpColor(buildingColor, skyColorStage0, far ? 0.7 : 0.4); finalColor.setAlpha(far ? 160 : 200); buildings.push({ x: random(width * 1.2) - width * 0.1, h: bldHeight, w: bldWidth, y: random(height * 2), speedFactor: far ? 0.2 : 0.6, isRooftop: false, color: finalColor }); } clouds = []; for (let i = 0; i < 20; i++) { clouds.push({ x: random(width * 1.5) - width * 0.25, y: random(height * 2), size: random(width * 0.1, width * 0.4), speedFactor: random(0.3, 0.9), alpha: random(50, 150) }); } galaxyParticles = []; for (let i = 0; i < 400; i++) { galaxyParticles.push({ angle: random(TWO_PI), radius: random(height * 0.1, width * 0.8), speed: random(0.001, 0.005), size: random(1, 4), color: random() < 0.7 ? galaxyColor1 : galaxyColor2 }); } }
-// windowResized (No changes needed here)
-function windowResized() { /* ... same ... */ let aspectRatio = windowHeight / windowWidth; let internalCanvasHeight = floor(internalCanvasWidth * aspectRatio); internalCanvasHeight = max(1, internalCanvasHeight); resizeCanvas(internalCanvasWidth, internalCanvasHeight); console.log(`Canvas resized to internal resolution: ${width}x${height}`); if (kitty) { kitty.baseY = height - 80; kitty.y = kitty.baseY; kitty.size = min(width, height) * 0.08; kitty.x = constrain(kitty.x, kitty.size / 2, width - kitty.size / 2); } else { console.warn("windowResized: kitty not ready yet."); } initializeBackgroundElements(); earthY = height * 1.5; defineButtonBounds(); }
+// windowResized - UPDATED Kitty Position
+function windowResized() {
+  let aspectRatio = windowHeight / windowWidth;
+  let internalCanvasHeight = floor(internalCanvasWidth * aspectRatio);
+  internalCanvasHeight = max(1, internalCanvasHeight);
+  resizeCanvas(internalCanvasWidth, internalCanvasHeight);
+  console.log(`Canvas resized to internal resolution: ${width}x${height}`);
 
-// draw (Calls rainbow trail update)
+  if (kitty) {
+      kitty.baseY = height * 0.66; // Update baseY based on new height
+      kitty.y = kitty.baseY;
+      kitty.size = min(width, height) * 0.08;
+      kitty.x = constrain(kitty.x, kitty.size / 2, width - kitty.size / 2);
+  } else { console.warn("windowResized: kitty not ready yet."); }
+  initializeBackgroundElements();
+  earthY = height * 1.5;
+  defineButtonBounds(); // Redefine ALL buttons
+}
+
+// draw (No changes needed)
 let lastGameState = '';
-function draw() { try { /* ... (stage, speed, bg calcs - same) ... */ let scrollSpeedForBackground = 0; previousVisualStage = visualStage; difficultyStage = floor(score / scorePerStage); if (isEndlessMode && (gameState === 'playing' || gameState === 'gameOverCutscene' || gameState === 'gameOver' || gameState === 'store')) { visualStage = maxVisualStageIndex; } else { visualStage = min(maxVisualStageIndex, difficultyStage); } let startingEndless = (gameState === 'playing' && lastGameState !== 'playing' && isEndlessMode); if (visualStage !== previousVisualStage && gameState === 'playing' && !startingEndless) { transitionStartTime = frameCount; console.log(`Transitioning to visual stage ${visualStage}`); if (visualStage < maxVisualStageIndex) { targetBgColor = skyColors[visualStage]; } else if (isEndlessMode) { targetBgColor = endlessKittyBgColor; } else { targetBgColor = danceKittyBgColor; } } else if (startingEndless) { console.log("Snapping BG to Endless Mode color"); currentBgColor = endlessKittyBgColor; targetBgColor = endlessKittyBgColor; transitionStartTime = -Infinity; } else if (gameState !== 'playing') { transitionStartTime = -Infinity; if (gameState === 'start' || gameState === 'intro' || gameState === 'store') { visualStage = 0; targetBgColor = skyColors[0]; currentBgColor = skyColors[0]; } else if (gameState === 'gameOverCutscene' || gameState === 'gameOver') { if (visualStage < maxVisualStageIndex) { currentBgColor = skyColors[visualStage]; } else if (isEndlessMode) { currentBgColor = endlessKittyBgColor; } else { currentBgColor = danceKittyBgColor; } targetBgColor = currentBgColor; } } else if (gameState === 'start' && previousVisualStage === 0) { currentBgColor = skyColors[0]; targetBgColor = skyColors[0]; } if (currentBgColor && targetBgColor) { currentBgColor = lerpColor(currentBgColor, targetBgColor, lerpSpeed); } else if(!currentBgColor && skyColors.length > 0){ currentBgColor = skyColors[0]; targetBgColor = skyColors[0]; } currentScrollSpeed = baseScrollSpeed + difficultyStage * scrollSpeedIncreasePerStage; currentPlushieFallSpeed = basePlushieFallSpeed + difficultyStage * plushieSpeedIncreasePerStage; currentPlushieSpawnInterval = max(minSpawnInterval, basePlushieSpawnInterval - difficultyStage * spawnRateDecreasePerStage); currentPlushieDrift = basePlushieDrift + difficultyStage * driftIncreasePerStage; scrollSpeedForBackground = (visualStage === maxVisualStageIndex || gameState !== 'playing') ? 0 : currentScrollSpeed; if(gameState === 'start' || gameState === 'gameOver' || gameState === 'gameOverCutscene' || gameState === 'store') scrollSpeedForBackground = baseScrollSpeed * 0.3; if(gameState === 'intro') scrollSpeedForBackground = 0; if (gameState === 'playing' && score > 0 && score % scorePerStage === 0 && score !== lastDifficultyIncreaseScore) { let lastMessage = currentEncouragingMessage; do { currentEncouragingMessage = random(encouragingMessages); } while (encouragingMessages.length > 1 && currentEncouragingMessage === lastMessage); lastDifficultyIncreaseScore = score; console.log("Difficulty Up! Message:", currentEncouragingMessage); } else if (score === 0) { lastDifficultyIncreaseScore = -1; }
+function draw() { /* ... same ... */ try { let scrollSpeedForBackground = 0; previousVisualStage = visualStage; difficultyStage = floor(score / scorePerStage); if (isEndlessMode && (gameState === 'playing' || gameState === 'gameOverCutscene' || gameState === 'gameOver' || gameState === 'store')) { visualStage = maxVisualStageIndex; } else { visualStage = min(maxVisualStageIndex, difficultyStage); } let startingEndless = (gameState === 'playing' && lastGameState !== 'playing' && isEndlessMode); if (visualStage !== previousVisualStage && gameState === 'playing' && !startingEndless) { transitionStartTime = frameCount; console.log(`Transitioning to visual stage ${visualStage}`); if (visualStage < maxVisualStageIndex) { targetBgColor = skyColors[visualStage]; } else if (isEndlessMode) { targetBgColor = endlessKittyBgColor; } else { targetBgColor = danceKittyBgColor; } } else if (startingEndless) { console.log("Snapping BG to Endless Mode color"); currentBgColor = endlessKittyBgColor; targetBgColor = endlessKittyBgColor; transitionStartTime = -Infinity; } else if (gameState !== 'playing') { transitionStartTime = -Infinity; if (gameState === 'start' || gameState === 'intro' || gameState === 'store') { visualStage = 0; targetBgColor = skyColors[0]; currentBgColor = skyColors[0]; } else if (gameState === 'gameOverCutscene' || gameState === 'gameOver') { if (visualStage < maxVisualStageIndex) { currentBgColor = skyColors[visualStage]; } else if (isEndlessMode) { currentBgColor = endlessKittyBgColor; } else { currentBgColor = danceKittyBgColor; } targetBgColor = currentBgColor; } } else if (gameState === 'start' && previousVisualStage === 0) { currentBgColor = skyColors[0]; targetBgColor = skyColors[0]; } if (currentBgColor && targetBgColor) { currentBgColor = lerpColor(currentBgColor, targetBgColor, lerpSpeed); } else if(!currentBgColor && skyColors.length > 0){ currentBgColor = skyColors[0]; targetBgColor = skyColors[0]; } currentScrollSpeed = baseScrollSpeed + difficultyStage * scrollSpeedIncreasePerStage; currentPlushieFallSpeed = basePlushieFallSpeed + difficultyStage * plushieSpeedIncreasePerStage; currentPlushieSpawnInterval = max(minSpawnInterval, basePlushieSpawnInterval - difficultyStage * spawnRateDecreasePerStage); currentPlushieDrift = basePlushieDrift + difficultyStage * driftIncreasePerStage; scrollSpeedForBackground = (visualStage === maxVisualStageIndex || gameState !== 'playing') ? 0 : currentScrollSpeed; if(gameState === 'start' || gameState === 'gameOver' || gameState === 'gameOverCutscene' || gameState === 'store') scrollSpeedForBackground = baseScrollSpeed * 0.3; if(gameState === 'intro') scrollSpeedForBackground = 0; if (gameState === 'playing' && score > 0 && score % scorePerStage === 0 && score !== lastDifficultyIncreaseScore) { let lastMessage = currentEncouragingMessage; do { currentEncouragingMessage = random(encouragingMessages); } while (encouragingMessages.length > 1 && currentEncouragingMessage === lastMessage); lastDifficultyIncreaseScore = score; console.log("Difficulty Up! Message:", currentEncouragingMessage); } else if (score === 0) { lastDifficultyIncreaseScore = -1; } let transitionProgress = constrain(map(frameCount - transitionStartTime, 0, transitionDuration), 0, 1); drawScrollingBackground(visualStage, scrollSpeedForBackground, currentBgColor, transitionProgress, isEndlessMode); if (typeof updateAndDrawRainbowTrail === 'function') { updateAndDrawRainbowTrail(scrollSpeedForBackground); } else { console.log("Rainbow func not found");} push(); if (shakeTime > 0) { translate(random(-6, 6), random(-6, 6)); shakeTime--; } if (gameState === 'intro') { displayIntro(); } else if (gameState === 'start') { displayStartScreen(); } else if (gameState === 'playing') { runGame(); } else if (gameState === 'store') { if (typeof displayStore === 'function') { displayStore(totalPlushiesCollected); } else { console.error("displayStore not found!"); gameState='start';} } else if (gameState === 'gameOverCutscene') { displayGameOverCutscene(); } else if (gameState === 'gameOver') { displayGameOverScreen(); } manageMusic(); lastGameState = gameState; if (!(gameState === 'intro' && introStep < 4) && gameState !== 'store') { if(kitty){ if (gameState !== 'gameOverCutscene') { kitty.bobOffset = sin(frameCount * 0.1) * (kitty.size * 0.05); kitty.y = kitty.baseY + kitty.bobOffset; } else { kitty.y = kitty.baseY; } drawKitty(gameState === 'gameOverCutscene'); } } pop(); } catch (e) { console.error("Error in draw():", e); noLoop(); } }
 
-  // --- Draw Background ---
-  let transitionProgress = constrain(map(frameCount - transitionStartTime, 0, transitionDuration), 0, 1);
-  drawScrollingBackground(visualStage, scrollSpeedForBackground, currentBgColor, transitionProgress, isEndlessMode);
-
-  // --- Draw Rainbow Trail --- (Check if function exists)
-  if (typeof updateAndDrawRainbowTrail === 'function') {
-    updateAndDrawRainbowTrail(scrollSpeedForBackground);
-  }
-
-  // --- Screen Shake ---
-  push(); if (shakeTime > 0) { translate(random(-6, 6), random(-6, 6)); shakeTime--; }
-
-  // --- Game State Display & Music ---
-  if (gameState === 'intro') { displayIntro(); } else if (gameState === 'start') { displayStartScreen(); } else if (gameState === 'playing') { runGame(); } else if (gameState === 'store') { if (typeof displayStore === 'function') { displayStore(totalPlushiesCollected); } else { console.error("displayStore not found!"); gameState='start';} } else if (gameState === 'gameOverCutscene') { displayGameOverCutscene(); } else if (gameState === 'gameOver') { displayGameOverScreen(); }
-  manageMusic(); lastGameState = gameState;
-
-  // --- Draw Kitty --- (Spawn rainbow particles here!)
-   if (!(gameState === 'intro' && introStep < 4) && gameState !== 'store') {
-       if(kitty){
-           if (gameState !== 'gameOverCutscene') { kitty.bobOffset = sin(frameCount * 0.1) * (kitty.size * 0.05); kitty.y = kitty.baseY + kitty.bobOffset; }
-           else { kitty.y = kitty.baseY; }
-
-           drawKitty(gameState === 'gameOverCutscene');
-
-           // --- Spawn Rainbow Particles if Equipped --- (Check if function exists)
-           if (gameState === 'playing' && typeof getEquippedItem === 'function' && getEquippedItem('jetpack_fx') === 'jetpack_rainbow') {
-                if (frameCount % 2 === 0 && typeof spawnRainbowParticle === 'function') { // Check spawn function too
-                    spawnRainbowParticle();
-                }
-           }
-       }
-   }
-
-  pop(); } catch (e) { console.error("Error in draw():", e); noLoop(); } }
-
-// Separate Element Drawing Functions (No changes)
+// Separate Element Drawing Functions (No changes needed)
 function drawStage0Elements(scrollSpeed, alphaFactor) { buildings.forEach(b => { b.y += scrollSpeed * b.speedFactor; if (b.y > height) b.y -= height * 2; let c = b.color; fill(red(c), green(c), blue(c), alpha(c) * alphaFactor); rect(b.x, b.y, b.w, b.h); }); }
 function drawStage1Elements(scrollSpeed, alphaFactor) { buildings.forEach(b => { if (!b.isRooftop) { b.h = random(height*0.05, height*0.15); b.isRooftop = true; } b.y += scrollSpeed * (b.speedFactor + 0.2); if (b.y > height) b.y -= height * 2; let c = b.color; let baseAlpha = max(0, alpha(c) - 100); fill(red(c), green(c), blue(c), baseAlpha * alphaFactor); if (baseAlpha * alphaFactor > 1) rect(b.x, b.y, b.w, b.h); }); clouds.forEach(c => { c.y += scrollSpeed * c.speedFactor; if (c.y > height) c.y -= height * 2; fill(red(cloudColor), green(cloudColor), blue(cloudColor), c.alpha * alphaFactor); ellipse(c.x, c.y, c.size * 1.2, c.size * 0.8); ellipse(c.x + c.size*0.3, c.y + c.size*0.1, c.size, c.size*0.7); ellipse(c.x - c.size*0.3, c.y + c.size*0.1, c.size*0.9, c.size*0.6); }); }
 function drawStage2Elements(scrollSpeed, alphaFactor) { clouds.forEach(c => { c.y += scrollSpeed * c.speedFactor; if (c.y > height) c.y -= height * 2; let baseAlpha = max(0, c.alpha - 80); fill(red(cloudColor), green(cloudColor), blue(cloudColor), baseAlpha * alphaFactor); if (baseAlpha * alphaFactor > 1) { ellipse(c.x, c.y, c.size * 1.2, c.size * 0.8); ellipse(c.x + c.size*0.3, c.y + c.size*0.1, c.size, c.size*0.7); ellipse(c.x - c.size*0.3, c.y + c.size*0.1, c.size*0.9, c.size*0.6); } }); stars.slice(0, 100).forEach(s => { s.y += scrollSpeed * s.speedFactor; if (s.y > height) s.y -= height * 2; let flicker = map(sin(frameCount * 0.08 + s.x), -1, 1, 0.6, 1.2); fill(255, 255, 255, map(s.speedFactor, 0.1, 0.5, 50, 150) * alphaFactor); ellipse(s.x, s.y, s.size * flicker * 0.8, s.size * flicker * 0.8); }); fill(red(earthColor), green(earthColor), blue(earthColor), 255 * alphaFactor); arc(width/2, height*1.5, width*2, height*2, PI, TWO_PI); }
@@ -206,7 +182,7 @@ function displayHUD() { /* ... same ... */ let hudTextSize = min(width, height) 
 // --- Helper Functions ---
 function spawnPlushie() { /* ... same ... */ if(!kitty) return; let plushieSize = kitty.size * 0.8; let spawnX = random(plushieSize, width - plushieSize); let plushie = { x: spawnX, y: -plushieSize, size: plushieSize, color: random(plushieColors), dx: random(-currentPlushieDrift, currentPlushieDrift) }; plushies.push(plushie); }
 function drawKitty(inCutscene = false) { /* ... same w/ bow logic ... */ if(!kitty) return; let drawBow = false; if (typeof getEquippedItem === 'function') { if (getEquippedItem('kitty_accessory') === 'kitty_bow_pink') { drawBow = true; } } if (kitty.hasJetpack) { rectMode(CENTER); fill(jetpackColor); stroke(50); strokeWeight(max(1, kitty.size * 0.03)); rect(kitty.x, kitty.y + kitty.size * 0.1, kitty.size * 0.6, kitty.size * 0.7, kitty.size * 0.1); rect(kitty.x - kitty.size * 0.2, kitty.y + kitty.size * 0.4, kitty.size * 0.15, kitty.size * 0.2); rect(kitty.x + kitty.size * 0.2, kitty.y + kitty.size * 0.4, kitty.size * 0.15, kitty.size * 0.2); if (!inCutscene || cutsceneStep < 3 || cutsceneStep > 4) { let flameSize = kitty.size * map(abs(kitty.bobOffset), 0, kitty.size * 0.05, 0.3, 0.6) * random(0.8, 1.2); if (!(typeof getEquippedItem === 'function' && getEquippedItem('jetpack_fx') === 'jetpack_rainbow')){ fill(255, random(150, 200), 0, 200); noStroke(); triangle(kitty.x - kitty.size * 0.2, kitty.y + kitty.size * 0.5, kitty.x - kitty.size * 0.2 - flameSize * 0.3, kitty.y + kitty.size * 0.5 + flameSize, kitty.x - kitty.size * 0.2 + flameSize * 0.3, kitty.y + kitty.size * 0.5 + flameSize); triangle(kitty.x + kitty.size * 0.2, kitty.y + kitty.size * 0.5, kitty.x + kitty.size * 0.2 - flameSize * 0.3, kitty.y + kitty.size * 0.5 + flameSize, kitty.x + kitty.size * 0.2 + flameSize * 0.3, kitty.y + kitty.size * 0.5 + flameSize); } } } fill(kittyColor); stroke(50); strokeWeight(max(1, kitty.size * 0.05)); rectMode(CENTER); rect(kitty.x, kitty.y, kitty.size, kitty.size); let earSize = kitty.size * 0.4; let earOffset = kitty.size * 0.1; triangle(kitty.x - kitty.size/2 + earOffset, kitty.y - kitty.size/2, kitty.x - kitty.size/2 + earOffset, kitty.y - kitty.size/2 - earSize, kitty.x - earOffset, kitty.y - kitty.size/2); triangle(kitty.x + kitty.size/2 - earOffset, kitty.y - kitty.size/2, kitty.x + kitty.size/2 - earOffset, kitty.y - kitty.size/2 - earSize, kitty.x + earOffset, kitty.y - kitty.size/2); strokeWeight(max(2, kitty.size * 0.1)); line(kitty.x + kitty.size / 2, kitty.y, kitty.x + kitty.size * 0.8, kitty.y - kitty.size*0.2); let eyeSize = kitty.size * 0.1; fill(40); noStroke(); ellipse(kitty.x - kitty.size * 0.2, kitty.y - kitty.size * 0.1, eyeSize, eyeSize); ellipse(kitty.x + kitty.size * 0.2, kitty.y - kitty.size * 0.1, eyeSize, eyeSize); if (drawBow) { let bowSize = kitty.size * 0.3; fill(255, 100, 150); stroke(50); strokeWeight(1); let bowX = kitty.x; let bowY = kitty.y - kitty.size * 0.5; triangle(bowX - bowSize, bowY, bowX, bowY - bowSize * 0.4, bowX, bowY + bowSize * 0.4); triangle(bowX + bowSize, bowY, bowX, bowY - bowSize * 0.4, bowX, bowY + bowSize * 0.4); } rectMode(CORNER); noStroke(); }
-// updateAndDrawRainbowTrail (Moved to rainbow.js)
+// updateAndDrawRainbowTrail (Now lives in rainbow.js)
 function drawPlushie(p) { /* ... same ... */ fill(p.color); stroke(50); strokeWeight(max(1, p.size * 0.04)); rectMode(CENTER); rect(p.x, p.y, p.size, p.size); let eyeSize = p.size * 0.1; fill(40); ellipse(p.x - p.size * 0.2, p.y - p.size * 0.1, eyeSize, eyeSize); ellipse(p.x + p.size * 0.2, p.y - p.size * 0.1, eyeSize, eyeSize); rectMode(CORNER); noStroke(); }
 function checkCollision(player, obj) { /* ... same ... */ if(!player || !obj) return false; let kittyLeft = player.x - player.size / 2, kittyRight = player.x + player.size / 2; let kittyTop = player.y - player.size / 2, kittyBottom = player.y + player.size / 2; let plushieLeft = obj.x - obj.size / 2, plushieRight = obj.x + obj.size / 2; let plushieTop = obj.y - obj.size / 2, plushieBottom = obj.y + obj.size / 2; let noOverlap = kittyLeft > plushieRight || kittyRight < plushieLeft || kittyTop > plushieBottom || kittyBottom < plushieTop; return !noOverlap; }
 function isPointInKitty(px, py) { /* ... same ... */ if(!kitty) return false; let buffer = kitty.size * 0.5; let kittyLeft = kitty.x - kitty.size / 2 - buffer, kittyRight = kitty.x + kitty.size / 2 + buffer; let kittyTop = kitty.y - kitty.size / 2 - buffer, kittyBottom = kitty.y + kitty.size / 2 + buffer; return px >= kittyLeft && px <= kittyRight && py >= kittyTop && py <= kittyBottom; }
