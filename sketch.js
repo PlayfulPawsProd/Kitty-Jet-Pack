@@ -3,7 +3,7 @@
 // PART 1 of 2 - Shadow and Ginger kitty colors added! Nya!
 
 // --- Version ---
-const gameVersion = "v1.1e"; // This MUST match the version you intend to run
+const gameVersion = "v1.12d"; // This MUST match the version you intend to run
 
 let kitty;
 let plushies = [];
