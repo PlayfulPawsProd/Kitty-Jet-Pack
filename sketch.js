@@ -1,9 +1,9 @@
 // ~~~ Kitty's Cuddle Collection: JETPACK GALAXY ADVENTURE! ~~~ //
-// Code for my Master~♥ Nyaa~! (Fetch Version Check!)
-// PART 1 of 2 - Checking version.json from GitHub! Nya~!
+// Code for my Master~♥ Nyaa~! (Rainbow Trail code moved to rainbow.js!)
+// PART 1 of 2 - Main sketch file, cleaner now! Nya!
 
 // --- Version ---
-const gameVersion = "v1.1e"; // This MUST match the version you intend to run
+const gameVersion = "v1.12a"; // This MUST match the version you intend to run
 
 let kitty;
 let plushies = [];
@@ -34,18 +34,15 @@ let basePlushieDrift = 0.5; let driftIncreasePerStage = 0.3;
 // --- Dynamic Difficulty Values ---
 let currentScrollSpeed, currentPlushieFallSpeed, currentPlushieSpawnInterval, currentPlushieDrift;
 
-// --- Style Settings ---
+// --- Style Settings --- (Defined using standard RGB or p5 color names)
 let kittyColor, jetpackColor, plushieColors = [];
 let heartColor, textColor, boomColor, sparkleColor, textBgColor;
 let skyColors = [], buildingColor, cloudColor, earthColor, earthContinentColor, galaxyColor1, galaxyColor2;
 let danceKittyBgColor, danceKittyColors = [];
 let endlessKittyBgColor, endlessKittyColors = [];
 let endlessModeButtonColor, endlessModeTextColorOn, endlessModeTextColorOff;
-let backButtonColor;
-let storeButtonColor, storeButtonTextColor;
-let updateButtonColor, updateButtonTextColor, updateAvailableColor; // Adjusted update button colors
-let textStrokeColor;
-let hudTextColorLight, hudTextColorDark;
+let backButtonColor, storeButtonColor, storeButtonTextColor, updateButtonColor, updateButtonTextColor, updateAvailableColor;
+let textStrokeColor; let hudTextColorLight, hudTextColorDark;
 
 // --- Background Transition ---
 let currentBgColor; let targetBgColor; let lerpSpeed = 0.03;
@@ -57,14 +54,12 @@ let earthY;
 
 // --- Encouraging Message ---
 let encouragingMessages = ["Keep Going!", "More Plushies!", "Nyaa~!", "Purrfect!", "You Got This!", "Don't Stop!", "For Master! ♥", "Faster!", "Wow!", "☆彡"];
-let currentEncouragingMessage = "";
-let lastDifficultyIncreaseScore = -1;
+let currentEncouragingMessage = ""; let lastDifficultyIncreaseScore = -1;
 
 // --- SOUND VARIABLES ---
 let bgMusic; let cutsceneMusic;
 let userHasInteracted = false; let audioStarted = false;
-let musicFadeTime = 0.5;
-let gameMusicVol = 0.5; let cutsceneMusicVol = 0.6;
+let musicFadeTime = 0.5; let gameMusicVol = 0.5; let cutsceneMusicVol = 0.6;
 
 // --- Canvas Size ---
 let internalCanvasWidth = 600;
@@ -73,9 +68,7 @@ let internalCanvasWidth = 600;
 let endlessModeButton; let backButton; let storeButton; let updateButton;
 
 // --- Update Check State ---
-let updateButtonState = 'idle'; // 'idle', 'checking', 'available', 'uptodate', 'error'
-let updateButtonText = "Check Updates";
-let updateCheckTimeout; // To reset button text
+let updateButtonState = 'idle'; let updateButtonText = "Check Updates"; let updateCheckTimeout;
 
 // --- Preload Function ---
 function preload() { /* ... same ... */ console.log("Preloading sound..."); bgMusic = loadSound('Skyward Whiskers.mp3', () => console.log("Skyward Whiskers loaded successfully!"), (e) => console.error("Error loading Skyward Whiskers:", e)); cutsceneMusic = loadSound('Skybound Quest.mp3', () => console.log("Skybound Quest loaded successfully!"), (e) => console.error("Error loading Skybound Quest:", e)); }
@@ -86,22 +79,20 @@ function setup() {
     let internalCanvasHeight = floor(internalCanvasWidth * aspectRatio);
     internalCanvasHeight = max(1, internalCanvasHeight);
     createCanvas(internalCanvasWidth, internalCanvasHeight);
-    console.log(`Canvas created at internal resolution: ${width}x${height}`);
+    // Keep default RGB color mode
+    console.log(`Canvas created at internal resolution: ${width}x${height}, Color Mode: RGB`);
 
     noSmooth(); textAlign(CENTER, CENTER); textFont('monospace');
 
-    // Colors
-    kittyColor = color(255, 105, 180, 240); jetpackColor = color(150, 150, 150, 220); plushieColors = [ color(173, 216, 230, 220), color(255, 223, 186, 220), color(144, 238, 144, 220), color(221, 160, 221, 220) ]; heartColor = color(255, 0, 0); textColor = color(250, 250, 250); textBgColor = color(0, 0, 0, 165); boomColor = color(255, 50, 50); sparkleColor = color(255, 255, 100);
+    // --- Define Colors using RGB or Hex ---
+    kittyColor = color(255, 105, 180); jetpackColor = color(150, 150, 150); plushieColors = [ color(173, 216, 230), color(255, 223, 186), color(144, 238, 144), color(221, 160, 221) ]; heartColor = color(255, 0, 0); textColor = color(250, 250, 250); textBgColor = color(0, 0, 0, 165); boomColor = color(255, 50, 50); sparkleColor = color(255, 255, 0);
     skyColors = [ color(135, 206, 235), color(160, 215, 240), color(80, 130, 180), color(20, 40, 80), color(5, 5, 20) ]; buildingColor = color(50, 50, 60); cloudColor = color(255, 255, 255); earthColor = color(60, 120, 220); earthContinentColor = color(80, 180, 80); galaxyColor1 = color(200, 180, 255, 100); galaxyColor2 = color(255, 255, 255, 80);
     danceKittyBgColor = color(255, 235, 240); danceKittyColors = [ color(180, 255, 255, 40), color(255, 180, 255, 40), color(255, 255, 180, 40), color(180, 180, 255, 40) ];
     endlessKittyBgColor = color(230, 255, 230); endlessKittyColors = [ color(255, 180, 180, 50), color(255, 220, 180, 50), color(180, 255, 180, 50), color(220, 180, 255, 50) ];
     endlessModeButtonColor = color(100, 200, 100, 180); endlessModeTextColorOn = color(255, 255, 150); endlessModeTextColorOff = color(200);
-    backButtonColor = color(200, 100, 100, 180);
-    storeButtonColor = color(150, 150, 220, 180); storeButtonTextColor = color(255);
-    updateButtonColor = color(80, 80, 150, 180); updateButtonTextColor = color(200);
-    updateAvailableColor = color(200, 150, 50, 200); // Orange-ish for update available
-    textStrokeColor = color(0, 0, 0, 150);
-    hudTextColorLight = color(250, 250, 250); hudTextColorDark = color(40, 40, 40);
+    backButtonColor = color(200, 100, 100, 180); storeButtonColor = color(150, 150, 220, 180); storeButtonTextColor = color(255);
+    updateButtonColor = color(80, 80, 150, 180); updateButtonTextColor = color(200); updateAvailableColor = color(200, 150, 50, 200);
+    textStrokeColor = color(0, 0, 0, 150); hudTextColorLight = color(250, 250, 250); hudTextColorDark = color(40, 40, 40);
 
     // Initialize kitty
     kitty = { baseY: height - 80, y: height - 80, size: min(width, height) * 0.08, x: width / 2, bobOffset: 0, hasJetpack: false };
@@ -142,9 +133,44 @@ function initializeBackgroundElements() { /* ... same ... */ if(!width || !heigh
 // windowResized (No changes needed here)
 function windowResized() { /* ... same ... */ let aspectRatio = windowHeight / windowWidth; let internalCanvasHeight = floor(internalCanvasWidth * aspectRatio); internalCanvasHeight = max(1, internalCanvasHeight); resizeCanvas(internalCanvasWidth, internalCanvasHeight); console.log(`Canvas resized to internal resolution: ${width}x${height}`); if (kitty) { kitty.baseY = height - 80; kitty.y = kitty.baseY; kitty.size = min(width, height) * 0.08; kitty.x = constrain(kitty.x, kitty.size / 2, width - kitty.size / 2); } else { console.warn("windowResized: kitty not ready yet."); } initializeBackgroundElements(); earthY = height * 1.5; defineButtonBounds(); }
 
-// draw (No changes needed here)
+// draw (Calls rainbow trail update)
 let lastGameState = '';
-function draw() { /* ... same ... */ try { let scrollSpeedForBackground = 0; previousVisualStage = visualStage; difficultyStage = floor(score / scorePerStage); if (isEndlessMode && (gameState === 'playing' || gameState === 'gameOverCutscene' || gameState === 'gameOver' || gameState === 'store')) { visualStage = maxVisualStageIndex; } else { visualStage = min(maxVisualStageIndex, difficultyStage); } let startingEndless = (gameState === 'playing' && lastGameState !== 'playing' && isEndlessMode); if (visualStage !== previousVisualStage && gameState === 'playing' && !startingEndless) { transitionStartTime = frameCount; console.log(`Transitioning to visual stage ${visualStage}`); if (visualStage < maxVisualStageIndex) { targetBgColor = skyColors[visualStage]; } else if (isEndlessMode) { targetBgColor = endlessKittyBgColor; } else { targetBgColor = danceKittyBgColor; } } else if (startingEndless) { console.log("Snapping BG to Endless Mode color"); currentBgColor = endlessKittyBgColor; targetBgColor = endlessKittyBgColor; transitionStartTime = -Infinity; } else if (gameState !== 'playing') { transitionStartTime = -Infinity; if (gameState === 'start' || gameState === 'intro' || gameState === 'store') { visualStage = 0; targetBgColor = skyColors[0]; currentBgColor = skyColors[0]; } else if (gameState === 'gameOverCutscene' || gameState === 'gameOver') { if (visualStage < maxVisualStageIndex) { currentBgColor = skyColors[visualStage]; } else if (isEndlessMode) { currentBgColor = endlessKittyBgColor; } else { currentBgColor = danceKittyBgColor; } targetBgColor = currentBgColor; } } else if (gameState === 'start' && previousVisualStage === 0) { currentBgColor = skyColors[0]; targetBgColor = skyColors[0]; } if (currentBgColor && targetBgColor) { currentBgColor = lerpColor(currentBgColor, targetBgColor, lerpSpeed); } else if(!currentBgColor && skyColors.length > 0){ currentBgColor = skyColors[0]; targetBgColor = skyColors[0]; } currentScrollSpeed = baseScrollSpeed + difficultyStage * scrollSpeedIncreasePerStage; currentPlushieFallSpeed = basePlushieFallSpeed + difficultyStage * plushieSpeedIncreasePerStage; currentPlushieSpawnInterval = max(minSpawnInterval, basePlushieSpawnInterval - difficultyStage * spawnRateDecreasePerStage); currentPlushieDrift = basePlushieDrift + difficultyStage * driftIncreasePerStage; scrollSpeedForBackground = (visualStage === maxVisualStageIndex || gameState !== 'playing') ? 0 : currentScrollSpeed; if(gameState === 'start' || gameState === 'gameOver' || gameState === 'gameOverCutscene' || gameState === 'store') scrollSpeedForBackground = baseScrollSpeed * 0.3; if(gameState === 'intro') scrollSpeedForBackground = 0; if (gameState === 'playing' && score > 0 && score % scorePerStage === 0 && score !== lastDifficultyIncreaseScore) { let lastMessage = currentEncouragingMessage; do { currentEncouragingMessage = random(encouragingMessages); } while (encouragingMessages.length > 1 && currentEncouragingMessage === lastMessage); lastDifficultyIncreaseScore = score; console.log("Difficulty Up! Message:", currentEncouragingMessage); } else if (score === 0) { lastDifficultyIncreaseScore = -1; } let transitionProgress = constrain(map(frameCount - transitionStartTime, 0, transitionDuration), 0, 1); drawScrollingBackground(visualStage, scrollSpeedForBackground, currentBgColor, transitionProgress, isEndlessMode); push(); if (shakeTime > 0) { translate(random(-6, 6), random(-6, 6)); shakeTime--; } if (gameState === 'intro') { displayIntro(); } else if (gameState === 'start') { displayStartScreen(); } else if (gameState === 'playing') { runGame(); } else if (gameState === 'store') { if (typeof displayStore === 'function') { displayStore(totalPlushiesCollected); } else { console.error("displayStore not found!"); gameState='start';} } else if (gameState === 'gameOverCutscene') { displayGameOverCutscene(); } else if (gameState === 'gameOver') { displayGameOverScreen(); } manageMusic(); lastGameState = gameState; if (!(gameState === 'intro' && introStep < 4) && gameState !== 'store') { if(kitty){ if (gameState !== 'gameOverCutscene') { kitty.bobOffset = sin(frameCount * 0.1) * (kitty.size * 0.05); kitty.y = kitty.baseY + kitty.bobOffset; } else { kitty.y = kitty.baseY; } drawKitty(gameState === 'gameOverCutscene'); } } pop(); } catch (e) { console.error("Error in draw():", e); noLoop(); } }
+function draw() { try { /* ... (stage, speed, bg calcs - same) ... */ let scrollSpeedForBackground = 0; previousVisualStage = visualStage; difficultyStage = floor(score / scorePerStage); if (isEndlessMode && (gameState === 'playing' || gameState === 'gameOverCutscene' || gameState === 'gameOver' || gameState === 'store')) { visualStage = maxVisualStageIndex; } else { visualStage = min(maxVisualStageIndex, difficultyStage); } let startingEndless = (gameState === 'playing' && lastGameState !== 'playing' && isEndlessMode); if (visualStage !== previousVisualStage && gameState === 'playing' && !startingEndless) { transitionStartTime = frameCount; console.log(`Transitioning to visual stage ${visualStage}`); if (visualStage < maxVisualStageIndex) { targetBgColor = skyColors[visualStage]; } else if (isEndlessMode) { targetBgColor = endlessKittyBgColor; } else { targetBgColor = danceKittyBgColor; } } else if (startingEndless) { console.log("Snapping BG to Endless Mode color"); currentBgColor = endlessKittyBgColor; targetBgColor = endlessKittyBgColor; transitionStartTime = -Infinity; } else if (gameState !== 'playing') { transitionStartTime = -Infinity; if (gameState === 'start' || gameState === 'intro' || gameState === 'store') { visualStage = 0; targetBgColor = skyColors[0]; currentBgColor = skyColors[0]; } else if (gameState === 'gameOverCutscene' || gameState === 'gameOver') { if (visualStage < maxVisualStageIndex) { currentBgColor = skyColors[visualStage]; } else if (isEndlessMode) { currentBgColor = endlessKittyBgColor; } else { currentBgColor = danceKittyBgColor; } targetBgColor = currentBgColor; } } else if (gameState === 'start' && previousVisualStage === 0) { currentBgColor = skyColors[0]; targetBgColor = skyColors[0]; } if (currentBgColor && targetBgColor) { currentBgColor = lerpColor(currentBgColor, targetBgColor, lerpSpeed); } else if(!currentBgColor && skyColors.length > 0){ currentBgColor = skyColors[0]; targetBgColor = skyColors[0]; } currentScrollSpeed = baseScrollSpeed + difficultyStage * scrollSpeedIncreasePerStage; currentPlushieFallSpeed = basePlushieFallSpeed + difficultyStage * plushieSpeedIncreasePerStage; currentPlushieSpawnInterval = max(minSpawnInterval, basePlushieSpawnInterval - difficultyStage * spawnRateDecreasePerStage); currentPlushieDrift = basePlushieDrift + difficultyStage * driftIncreasePerStage; scrollSpeedForBackground = (visualStage === maxVisualStageIndex || gameState !== 'playing') ? 0 : currentScrollSpeed; if(gameState === 'start' || gameState === 'gameOver' || gameState === 'gameOverCutscene' || gameState === 'store') scrollSpeedForBackground = baseScrollSpeed * 0.3; if(gameState === 'intro') scrollSpeedForBackground = 0; if (gameState === 'playing' && score > 0 && score % scorePerStage === 0 && score !== lastDifficultyIncreaseScore) { let lastMessage = currentEncouragingMessage; do { currentEncouragingMessage = random(encouragingMessages); } while (encouragingMessages.length > 1 && currentEncouragingMessage === lastMessage); lastDifficultyIncreaseScore = score; console.log("Difficulty Up! Message:", currentEncouragingMessage); } else if (score === 0) { lastDifficultyIncreaseScore = -1; }
+
+  // --- Draw Background ---
+  let transitionProgress = constrain(map(frameCount - transitionStartTime, 0, transitionDuration), 0, 1);
+  drawScrollingBackground(visualStage, scrollSpeedForBackground, currentBgColor, transitionProgress, isEndlessMode);
+
+  // --- Draw Rainbow Trail --- (Check if function exists)
+  if (typeof updateAndDrawRainbowTrail === 'function') {
+    updateAndDrawRainbowTrail(scrollSpeedForBackground);
+  }
+
+  // --- Screen Shake ---
+  push(); if (shakeTime > 0) { translate(random(-6, 6), random(-6, 6)); shakeTime--; }
+
+  // --- Game State Display & Music ---
+  if (gameState === 'intro') { displayIntro(); } else if (gameState === 'start') { displayStartScreen(); } else if (gameState === 'playing') { runGame(); } else if (gameState === 'store') { if (typeof displayStore === 'function') { displayStore(totalPlushiesCollected); } else { console.error("displayStore not found!"); gameState='start';} } else if (gameState === 'gameOverCutscene') { displayGameOverCutscene(); } else if (gameState === 'gameOver') { displayGameOverScreen(); }
+  manageMusic(); lastGameState = gameState;
+
+  // --- Draw Kitty --- (Spawn rainbow particles here!)
+   if (!(gameState === 'intro' && introStep < 4) && gameState !== 'store') {
+       if(kitty){
+           if (gameState !== 'gameOverCutscene') { kitty.bobOffset = sin(frameCount * 0.1) * (kitty.size * 0.05); kitty.y = kitty.baseY + kitty.bobOffset; }
+           else { kitty.y = kitty.baseY; }
+
+           drawKitty(gameState === 'gameOverCutscene');
+
+           // --- Spawn Rainbow Particles if Equipped --- (Check if function exists)
+           if (gameState === 'playing' && typeof getEquippedItem === 'function' && getEquippedItem('jetpack_fx') === 'jetpack_rainbow') {
+                if (frameCount % 2 === 0 && typeof spawnRainbowParticle === 'function') { // Check spawn function too
+                    spawnRainbowParticle();
+                }
+           }
+       }
+   }
+
+  pop(); } catch (e) { console.error("Error in draw():", e); noLoop(); } }
 
 // Separate Element Drawing Functions (No changes)
 function drawStage0Elements(scrollSpeed, alphaFactor) { buildings.forEach(b => { b.y += scrollSpeed * b.speedFactor; if (b.y > height) b.y -= height * 2; let c = b.color; fill(red(c), green(c), blue(c), alpha(c) * alphaFactor); rect(b.x, b.y, b.w, b.h); }); }
@@ -154,11 +180,11 @@ function drawStage3Elements(scrollSpeed, alphaFactor) { earthY += scrollSpeed * 
 function drawStage4Elements(scrollSpeed, alphaFactor) { stars.forEach(s => { s.y += scrollSpeed * s.speedFactor; if (s.y > height) s.y -= height * 2; let flicker = map(sin(frameCount * 0.1 + s.x + 50), -1, 1, 0.8, 1.4); fill(255, 255, 255, map(s.speedFactor, 0.05, 0.4, 180, 255) * alphaFactor); ellipse(s.x, s.y, s.size * flicker, s.size * flicker); }); push(); translate(width / 2, height / 2); rotate(frameCount * 0.001); galaxyParticles.forEach(p => { p.angle += p.speed; let x = cos(p.angle) * p.radius; let y = sin(p.angle) * p.radius * 0.3; let flicker = random(0.5, 1.5); let baseAlpha = alpha(p.color); fill(red(p.color), green(p.color), blue(p.color), baseAlpha * flicker * 0.8 * alphaFactor); ellipse(x, y, p.size * flicker, p.size * flicker); }); pop(); }
 function drawStage5Elements(alphaFactor, isEndless) { /* ... same subtle kitties ... */ let kittySize = 40; let spacing = kittySize * 1.5; let cols = ceil(width / spacing); let rows = ceil(height / spacing); let colorsToUse = isEndless ? endlessKittyColors : danceKittyColors; noStroke(); for (let i = 0; i < cols; i++) { for (let j = 0; j < rows; j++) { let x = i * spacing + spacing / 2; let y = j * spacing + spacing / 2; let wiggleX = sin(frameCount * 0.1 + i * 0.5 + j * 0.3) * 3; let wiggleY = cos(frameCount * 0.1 + i * 0.3 + j * 0.5) * 2; let kittyIndex = (i + j) % colorsToUse.length; let c = colorsToUse[kittyIndex]; fill(red(c), green(c), blue(c), alpha(c) * alphaFactor); rectMode(CENTER); rect(x + wiggleX, y + wiggleY, kittySize * 0.6, kittySize * 0.6); triangle(x + wiggleX - kittySize*0.3, y + wiggleY - kittySize*0.3, x + wiggleX - kittySize*0.3, y + wiggleY - kittySize*0.5, x + wiggleX - kittySize*0.1, y + wiggleY - kittySize*0.3); triangle(x + wiggleX + kittySize*0.3, y + wiggleY - kittySize*0.3, x + wiggleX + kittySize*0.3, y + wiggleY - kittySize*0.5, x + wiggleX + kittySize*0.1, y + wiggleY - kittySize*0.3); } } if (currentEncouragingMessage !== "") { fill(255, 255, 255, 60 * alphaFactor); textSize(min(width, height) * 0.15); textAlign(CENTER, CENTER); text(currentEncouragingMessage, width / 2, height / 2); } rectMode(CORNER); }
 
-// drawScrollingBackground (No changes needed)
+// drawScrollingBackground (No changes)
 function drawScrollingBackground(currentStageIndex, scrollSpeed, bgColor, transitionProgress, isEndless) { rectMode(CORNER); noStroke(); background(bgColor); let drawFuncs = [drawStage0Elements, drawStage1Elements, drawStage2Elements, drawStage3Elements, drawStage4Elements, drawStage5Elements]; let alphaValue = 1.0; if (transitionProgress < 1.0 && transitionStartTime > -Infinity) { alphaValue = transitionProgress; } if (drawFuncs[currentStageIndex]) { if (currentStageIndex === 5) { drawFuncs[currentStageIndex](alphaValue, isEndless); } else { drawFuncs[currentStageIndex](scrollSpeed, alphaValue); } } }
 
-// Gameplay Loop
-function runGame() { /* ... same endless miss logic ... */ if(!kitty) return; kitty.x = constrain(kitty.x, kitty.size / 2, width - kitty.size / 2); if (frameCount % floor(currentPlushieSpawnInterval) === 0) { spawnPlushie(); } for (let i = plushies.length - 1; i >= 0; i--) { let p = plushies[i]; p.y += currentScrollSpeed + currentPlushieFallSpeed * (height/600); p.x += p.dx; if (p.x < p.size / 2 || p.x > width - p.size / 2) { p.dx *= -0.9; p.x = constrain(p.x, p.size/2, width - p.size/2); } drawPlushie(p); if (checkCollision(kitty, p)) { score++; totalPlushiesCollected++; if (isEndlessMode) { currentStreak++; highestStreakInSession = max(highestStreakInSession, currentStreak); } plushies.splice(i, 1); } else if (p.y > height + p.size) { plushies.splice(i, 1); if (isEndlessMode) { console.log(`Endless Miss! Streak broken at ${currentStreak}. Score and speed reset.`); score = 0; difficultyStage = 0; currentStreak = 0; lastDifficultyIncreaseScore = -1; } else { lives--; console.log(`Life lost! ${lives} remaining.`); if (lives <= 0) { isDragging = false; if (score > highScore) { highScore = score; try { localStorage.setItem('kittyJetpackHighScore', highScore); console.log("New High Score saved!", highScore); } catch(e){ console.warn("Failed to save high score:", e); }} try { localStorage.setItem('kittyTotalPlushies', totalPlushiesCollected); } catch(e){ console.warn("Failed to save total plushies:", e); } if (visualStage === maxVisualStageIndex && !isEndlessMode) { gameState = 'gameOverCutscene'; cutsceneStep = 0; console.log("Starting Game Over Cutscene!"); } else { gameState = 'gameOver'; } } } } } displayHUD(); } // Cutscene only plays in normal mode
+// Gameplay Loop (No changes needed here)
+function runGame() { /* ... same endless miss logic ... */ if(!kitty) return; kitty.x = constrain(kitty.x, kitty.size / 2, width - kitty.size / 2); if (frameCount % floor(currentPlushieSpawnInterval) === 0) { spawnPlushie(); } for (let i = plushies.length - 1; i >= 0; i--) { let p = plushies[i]; p.y += currentScrollSpeed + currentPlushieFallSpeed * (height/600); p.x += p.dx; if (p.x < p.size / 2 || p.x > width - p.size / 2) { p.dx *= -0.9; p.x = constrain(p.x, p.size/2, width - p.size/2); } drawPlushie(p); if (checkCollision(kitty, p)) { score++; totalPlushiesCollected++; if (isEndlessMode) { currentStreak++; highestStreakInSession = max(highestStreakInSession, currentStreak); } plushies.splice(i, 1); } else if (p.y > height + p.size) { plushies.splice(i, 1); if (isEndlessMode) { console.log(`Endless Miss! Streak broken at ${currentStreak}. Score and speed reset.`); score = 0; difficultyStage = 0; currentStreak = 0; lastDifficultyIncreaseScore = -1; } else { lives--; console.log(`Life lost! ${lives} remaining.`); if (lives <= 0) { isDragging = false; if (score > highScore) { highScore = score; try { localStorage.setItem('kittyJetpackHighScore', highScore); console.log("New High Score saved!", highScore); } catch(e){ console.warn("Failed to save high score:", e); }} try { localStorage.setItem('kittyTotalPlushies', totalPlushiesCollected); } catch(e){ console.warn("Failed to save total plushies:", e); } if (visualStage === maxVisualStageIndex && !isEndlessMode) { gameState = 'gameOverCutscene'; cutsceneStep = 0; console.log("Starting Game Over Cutscene!"); } else { gameState = 'gameOver'; } } } } } displayHUD(); }
 
 // --- Screen Displays ---
 
@@ -166,74 +192,10 @@ function runGame() { /* ... same endless miss logic ... */ if(!kitty) return; ki
 function displayIntro() { /* ... same ... */ let lineY = height * 0.2; let lineSpacing = min(width, height) * 0.05; let baseTextSize = lineSpacing * 0.7; let textBlockHeight = 0; let textBlockWidth = width * 0.85; let boxCenterY = height * 0.45; if (introStep <= 1) textBlockHeight = lineSpacing * 2.5; else if (introStep === 2) textBlockHeight = lineSpacing * 4; else if (introStep === 3) textBlockHeight = lineSpacing * 2.5; else if (introStep === 4) textBlockHeight = lineSpacing * 4; else if (introStep === 5) textBlockHeight = lineSpacing * 4.5; else if (introStep === 6) textBlockHeight = lineSpacing * 4.5; else if (introStep === 7) textBlockHeight = lineSpacing * 4; else if (introStep === 8) textBlockHeight = lineSpacing * 4.5; else if (introStep === 9) textBlockHeight = lineSpacing * 4; else if (introStep === 10) textBlockHeight = lineSpacing * 4.5; else if (introStep === 11) textBlockHeight = lineSpacing * 3.5; else textBlockHeight = lineSpacing * 3; fill(textBgColor); rectMode(CENTER); rect(width / 2, boxCenterY, textBlockWidth, textBlockHeight, 15); fill(textColor); textSize(baseTextSize); let currentLineY = boxCenterY - textBlockHeight / 2 + lineSpacing; if (introStep === 0) { text("Zzzzzz... purrrr...", width / 2, currentLineY); } else if (introStep === 1) { text("Zzzzzz...", width / 2, currentLineY); text("Suddenly, next door...", width / 2, currentLineY + lineSpacing); } else if (introStep === 2) { text("Suddenly...", width / 2, currentLineY); textSize(baseTextSize * 1.8); fill(boomColor); text("*** KABLOOOOOOM!!! ***", width / 2, currentLineY + lineSpacing * 1.5); textSize(baseTextSize); fill(textColor); } else if (introStep === 3) { text("NYA?! THAT BLAST AGAIN! Kana, you IDIOT!", width / 2, currentLineY); } else if (introStep === 4) { text("The whole house is shaking!", width / 2, currentLineY); text("The ceiling--! It's collapsing!", width / 2, currentLineY + lineSpacing); } else if (introStep === 5) { text("EEK! Gotta get out!", width / 2, currentLineY); text("But... wait...", width / 2, currentLineY + lineSpacing); text("What's that gleaming in the rubble?!", width / 2, currentLineY + lineSpacing * 2); } else if (introStep === 6) { text("What's that gleaming?!", width / 2, currentLineY); textSize(baseTextSize * 1.2); fill(sparkleColor); text("✨ A... JETPACK?! ✨", width / 2, currentLineY + lineSpacing * 1.2); textSize(baseTextSize); fill(textColor); text("And it fits purrfectly!", width / 2, currentLineY + lineSpacing * 2.4); } else if (introStep === 7) { text("Who cares where it came from!", width / 2, currentLineY); textSize(baseTextSize * 1.4); text("WHOOSH! Up we go!", width / 2, currentLineY + lineSpacing * 1.5); textSize(baseTextSize); } else if (introStep === 8) { text("WHOA! Flying!", width / 2, currentLineY); text("But... OH NO!", width / 2, currentLineY + lineSpacing); text("Explosion scattered plushies EVERYWHERE!", width / 2, currentLineY + lineSpacing * 2); } else if (introStep === 9) { text("They're floating all around!", width / 2, currentLineY); text("Gotta grab 'em while we fly!", width / 2, currentLineY + lineSpacing); } else if (introStep === 10) { text("Gotta grab 'em!", width / 2, currentLineY); textSize(baseTextSize * 1.2); text("They're MINE!", width / 2, currentLineY + lineSpacing); textSize(baseTextSize * 0.9); fill(kittyColor); text("...OURS, Master! OURS! ♥", width / 2, currentLineY + lineSpacing * 2); fill(textColor); textSize(baseTextSize); } else if (introStep === 11) { text("Use your finger to drag me left and right!", width / 2, currentLineY); text("Catch every single one!", width / 2, currentLineY + lineSpacing); } else if (introStep === 12) { text("Catch every single one!", width / 2, currentLineY); textSize(baseTextSize * 0.8); text("(Tap screen to start the ascent!)", width / 2, currentLineY + lineSpacing); } if (introStep < 12) { textSize(baseTextSize * 0.7); fill(200); text("[Tap to continue]", width / 2, height - lineSpacing * 0.7); } rectMode(CORNER); }
 
 // END OF PART 1
-// PART 2 of 2 - Visible Update Button & Version! Nya!
+// PART 2 of 2 - Color Mode Revert Fix! Nya!
 
-// Start Screen - ADDED Update Button Drawing & Version
-function displayStartScreen() {
-    fill(textColor); stroke(textStrokeColor); strokeWeight(2.5);
-    let titleSize = min(width, height) * 0.095; let instructionSize = titleSize * 0.5;
-    let masterSize = instructionSize * 1.1; let tapSize = instructionSize * 0.85;
-    let highScoreSize = tapSize * 0.90; let totalPlushieSize = highScoreSize * 0.9;
-    let buttonTextSize = instructionSize * 0.75; let updateButtonTextSize = buttonTextSize * 0.8;
-    let versionTextSize = updateButtonTextSize * 0.7; // Even smaller version text
-    let lineSpacingFactor = 1.2;
-
-    // Title & Instructions
-    textSize(titleSize); text("Kitty's Cuddle", width / 2, height * 0.18);
-    text("Collection~♥", width / 2, height * 0.18 + titleSize * lineSpacingFactor);
-    let instructionY = height * 0.18 + titleSize * lineSpacingFactor * 2.2;
-    textSize(instructionSize); text("Ready for Liftoff?", width / 2, instructionY); instructionY += instructionSize * lineSpacingFactor;
-    text("DRAG me left/right", width / 2, instructionY); instructionY += instructionSize * lineSpacingFactor * 0.9;
-    text("to catch plushies,", width/2, instructionY); instructionY += instructionSize * lineSpacingFactor * 1.3;
-    fill(kittyColor); textSize(masterSize); stroke(textStrokeColor); strokeWeight(2.5); text("Master~!", width/2, instructionY); instructionY += masterSize * lineSpacingFactor * 1.2;
-
-    // Endless Mode Button
-    if (endlessModeButton) { /* ... same drawing logic ... */ endlessModeButton.y = instructionY; rectMode(CORNER); fill(endlessModeButtonColor); noStroke(); rect(endlessModeButton.x, endlessModeButton.y, endlessModeButton.w, endlessModeButton.h, 5); textSize(buttonTextSize); textAlign(CENTER, CENTER); stroke(textStrokeColor); strokeWeight(1.5); if (isEndlessMode) { fill(endlessModeTextColorOn); text("Endless Mode: ON", endlessModeButton.x + endlessModeButton.w / 2, endlessModeButton.y + endlessModeButton.h / 2); } else { fill(endlessModeTextColorOff); text("Endless Mode: OFF", endlessModeButton.x + endlessModeButton.w / 2, endlessModeButton.y + endlessModeButton.h / 2); } instructionY += endlessModeButton.h * 1.2; if (isEndlessMode) { noStroke(); fill(200); textSize(buttonTextSize * 0.8); text("(Score/Speed resets on Miss)", width / 2, instructionY); instructionY += buttonTextSize * 0.8 * lineSpacingFactor; } }
-
-    // Store Button
-    if (storeButton) { /* ... same drawing logic ... */ storeButton.y = instructionY; rectMode(CORNER); fill(storeButtonColor); noStroke(); rect(storeButton.x, storeButton.y, storeButton.w, storeButton.h, 5); textSize(buttonTextSize * 0.9); textAlign(CENTER, CENTER); stroke(textStrokeColor); strokeWeight(1.5); fill(storeButtonTextColor); text("Store", storeButton.x + storeButton.w / 2, storeButton.y + storeButton.h / 2); instructionY += storeButton.h * 1.5; }
-
-    // Tap to Fly Text
-    fill(textColor); textSize(tapSize); strokeWeight(2); if (frameCount % 60 < 40) { text("Tap Here or Above to FLY!", width / 2, instructionY); } instructionY += tapSize * lineSpacingFactor * 1.5;
-
-    // High Scores
-    textSize(highScoreSize); fill(200); stroke(textStrokeColor); strokeWeight(2);
-    text(`Normal High Score: ${highScore}`, width/2, instructionY); instructionY += highScoreSize * lineSpacingFactor;
-    text(`Endless Streak High Score: ${endlessHighScore}`, width/2, instructionY); instructionY += highScoreSize * lineSpacingFactor;
-
-    // Total Plushies
-    textSize(totalPlushieSize); text(`Total Plushies Collected: ${totalPlushiesCollected}`, width/2, instructionY);
-
-    // --- Draw Update Button --- (Now Visible!)
-    if (updateButton) {
-        rectMode(CORNER);
-        // Change color based on state
-        let currentUpdateButtonColor = updateButtonColor;
-        let currentUpdateButtonTextColor = updateButtonTextColor;
-        if (updateButtonState === 'checking') {
-            currentUpdateButtonColor = color(150, 150, 80); // Yellowish while checking
-            currentUpdateButtonTextColor = color(50);
-        } else if (updateButtonState === 'available') {
-            currentUpdateButtonColor = updateAvailableColor; // Orange-ish
-            currentUpdateButtonTextColor = color(0);
-        } else if (updateButtonState === 'uptodate' || updateButtonState === 'error') {
-             currentUpdateButtonColor = color(100); // Greyed out slightly
-             currentUpdateButtonTextColor = color(180);
-        }
-
-        fill(currentUpdateButtonColor); noStroke();
-        rect(updateButton.x, updateButton.y, updateButton.w, updateButton.h, 5);
-        fill(currentUpdateButtonTextColor); stroke(textStrokeColor); strokeWeight(1); textSize(updateButtonTextSize); textAlign(CENTER, CENTER);
-        text(updateButtonText, updateButton.x + updateButton.w / 2, updateButton.y + updateButton.h / 2);
-    }
-
-     // --- Draw Version Number --- (Added!)
-     textSize(versionTextSize); fill(150); noStroke(); textAlign(LEFT, BOTTOM);
-     text(gameVersion, 5, height - 5);
-
-    noStroke(); textAlign(CENTER, CENTER); // Reset
-}
-
+// Start Screen
+function displayStartScreen() { /* ... same w/ update button draw ... */ fill(textColor); stroke(textStrokeColor); strokeWeight(2.5); let titleSize = min(width, height) * 0.095; let instructionSize = titleSize * 0.5; let masterSize = instructionSize * 1.1; let tapSize = instructionSize * 0.85; let highScoreSize = tapSize * 0.90; let totalPlushieSize = highScoreSize * 0.9; let buttonTextSize = instructionSize * 0.75; let updateButtonTextSize = buttonTextSize * 0.8; let versionTextSize = updateButtonTextSize * 0.7; let lineSpacingFactor = 1.2; textSize(titleSize); text("Kitty's Cuddle", width / 2, height * 0.18); text("Collection~♥", width / 2, height * 0.18 + titleSize * lineSpacingFactor); let instructionY = height * 0.18 + titleSize * lineSpacingFactor * 2.2; textSize(instructionSize); text("Ready for Liftoff?", width / 2, instructionY); instructionY += instructionSize * lineSpacingFactor; text("DRAG me left/right", width / 2, instructionY); instructionY += instructionSize * lineSpacingFactor * 0.9; text("to catch plushies,", width/2, instructionY); instructionY += instructionSize * lineSpacingFactor * 1.3; fill(kittyColor); textSize(masterSize); stroke(textStrokeColor); strokeWeight(2.5); text("Master~!", width/2, instructionY); instructionY += masterSize * lineSpacingFactor * 1.2; if (endlessModeButton) { endlessModeButton.y = instructionY; rectMode(CORNER); fill(endlessModeButtonColor); noStroke(); rect(endlessModeButton.x, endlessModeButton.y, endlessModeButton.w, endlessModeButton.h, 5); textSize(buttonTextSize); textAlign(CENTER, CENTER); stroke(textStrokeColor); strokeWeight(1.5); if (isEndlessMode) { fill(endlessModeTextColorOn); text("Endless Mode: ON", endlessModeButton.x + endlessModeButton.w / 2, endlessModeButton.y + endlessModeButton.h / 2); } else { fill(endlessModeTextColorOff); text("Endless Mode: OFF", endlessModeButton.x + endlessModeButton.w / 2, endlessModeButton.y + endlessModeButton.h / 2); } instructionY += endlessModeButton.h * 1.2; if (isEndlessMode) { noStroke(); fill(200); textSize(buttonTextSize * 0.8); text("(Score/Speed resets on Miss)", width / 2, instructionY); instructionY += buttonTextSize * 0.8 * lineSpacingFactor; } } if (storeButton) { storeButton.y = instructionY; rectMode(CORNER); fill(storeButtonColor); noStroke(); rect(storeButton.x, storeButton.y, storeButton.w, storeButton.h, 5); textSize(buttonTextSize * 0.9); textAlign(CENTER, CENTER); stroke(textStrokeColor); strokeWeight(1.5); fill(storeButtonTextColor); text("Store", storeButton.x + storeButton.w / 2, storeButton.y + storeButton.h / 2); instructionY += storeButton.h * 1.5; } fill(textColor); textSize(tapSize); strokeWeight(2); if (frameCount % 60 < 40) { text("Tap Here or Above to FLY!", width / 2, instructionY); } instructionY += tapSize * lineSpacingFactor * 1.5; textSize(highScoreSize); fill(200); stroke(textStrokeColor); strokeWeight(2); text(`Normal High Score: ${highScore}`, width/2, instructionY); instructionY += highScoreSize * lineSpacingFactor; text(`Endless Streak High Score: ${endlessHighScore}`, width/2, instructionY); instructionY += highScoreSize * lineSpacingFactor; textSize(totalPlushieSize); text(`Total Plushies Collected: ${totalPlushiesCollected}`, width/2, instructionY); if (updateButton) { let currentUpdateButtonColor = updateButtonColor; let currentUpdateButtonTextColor = updateButtonTextColor; if (updateButtonState === 'checking') { currentUpdateButtonColor = color(150, 150, 80); currentUpdateButtonTextColor = color(50); } else if (updateButtonState === 'available') { currentUpdateButtonColor = updateAvailableColor; currentUpdateButtonTextColor = color(0); } else if (updateButtonState === 'uptodate' || updateButtonState === 'error') { currentUpdateButtonColor = color(100); currentUpdateButtonTextColor = color(180); } rectMode(CORNER); fill(currentUpdateButtonColor); noStroke(); rect(updateButton.x, updateButton.y, updateButton.w, updateButton.h, 5); fill(currentUpdateButtonTextColor); stroke(textStrokeColor); strokeWeight(1); textSize(updateButtonTextSize); textAlign(CENTER, CENTER); text(updateButtonText, updateButton.x + updateButton.w / 2, updateButton.y + updateButton.h / 2); } textSize(versionTextSize); fill(150); noStroke(); textAlign(LEFT, BOTTOM); text(gameVersion, 5, height - 5); noStroke(); textAlign(CENTER, CENTER); }
 // Game Over Cutscene Display (No changes)
 function displayGameOverCutscene() { /* ... same ... */ let lineY = height * 0.2; let lineSpacing = min(width, height) * 0.05; let baseTextSize = lineSpacing * 0.7; let textBlockHeight = 0; let textBlockWidth = width * 0.85; let boxCenterY = height * 0.45; if (cutsceneStep <= 1) textBlockHeight = lineSpacing * 2.5; else if (cutsceneStep === 2) textBlockHeight = lineSpacing * 3.5; else if (cutsceneStep === 3) textBlockHeight = lineSpacing * 2.5; else if (cutsceneStep === 4) textBlockHeight = lineSpacing * 4; else if (cutsceneStep === 5) textBlockHeight = lineSpacing * 2.5; else textBlockHeight = lineSpacing * 3; fill(textBgColor); rectMode(CENTER); rect(width / 2, boxCenterY, textBlockWidth, textBlockHeight, 15); fill(textColor); textSize(baseTextSize); let currentLineY = boxCenterY - textBlockHeight / 2 + lineSpacing; if (cutsceneStep === 0) { text("*Phew...*", width / 2, currentLineY); text("That was a LOT of plushies...", width / 2, currentLineY + lineSpacing); } else if (cutsceneStep === 1) { text("I think... I think I got them all...?", width / 2, currentLineY); text("(Finally... peace and quiet...)", width / 2, currentLineY + lineSpacing); } else if (cutsceneStep === 2) { text("Wait... what's that noise?", width / 2, currentLineY); text("*Clatter! Crash!*", width/2, currentLineY + lineSpacing); text("Oh no... not AGAIN!", width / 2, currentLineY + lineSpacing * 2); } else if (cutsceneStep === 3) { text("KANA! DON'T TOUCH THAT--!", width / 2, currentLineY + lineSpacing); if(shakeTime <= 0) shakeTime = 15; } else if (cutsceneStep === 4) { textSize(baseTextSize * 1.8); fill(boomColor); text("*** KABOOOOOOM!!! ***", width / 2, currentLineY + lineSpacing * 1.5); textSize(baseTextSize); fill(textColor); for(let i=0; i<5; i++) { fill(random(plushieColors)); rect(random(width), random(height*0.6, height), 15, 15); } } else if (cutsceneStep === 5) { text("NYAAAAAAAAA!", width / 2, currentLineY); text("They're everywhere AGAIN!", width / 2, currentLineY + lineSpacing); } else if (cutsceneStep === 6) { text("They're everywhere AGAIN!", width / 2, currentLineY); textSize(baseTextSize * 0.8); text("(Tap to see your score... *sigh*)", width / 2, currentLineY + lineSpacing); } if (cutsceneStep < 6) { textSize(baseTextSize * 0.7); fill(200); text("[Tap to continue]", width / 2, height - lineSpacing * 0.7); } rectMode(CORNER); }
 // Game Over Screen (No changes)
@@ -243,112 +205,16 @@ function displayHUD() { /* ... same ... */ let hudTextSize = min(width, height) 
 
 // --- Helper Functions ---
 function spawnPlushie() { /* ... same ... */ if(!kitty) return; let plushieSize = kitty.size * 0.8; let spawnX = random(plushieSize, width - plushieSize); let plushie = { x: spawnX, y: -plushieSize, size: plushieSize, color: random(plushieColors), dx: random(-currentPlushieDrift, currentPlushieDrift) }; plushies.push(plushie); }
-function drawKitty(inCutscene = false) { /* ... same w/ bow logic ... */ if(!kitty) return; let drawBow = false; if (typeof getEquippedItem === 'function') { if (getEquippedItem('kitty_accessory') === 'kitty_bow_pink') { drawBow = true; } } if (kitty.hasJetpack) { rectMode(CENTER); fill(jetpackColor); stroke(50); strokeWeight(max(1, kitty.size * 0.03)); rect(kitty.x, kitty.y + kitty.size * 0.1, kitty.size * 0.6, kitty.size * 0.7, kitty.size * 0.1); rect(kitty.x - kitty.size * 0.2, kitty.y + kitty.size * 0.4, kitty.size * 0.15, kitty.size * 0.2); rect(kitty.x + kitty.size * 0.2, kitty.y + kitty.size * 0.4, kitty.size * 0.15, kitty.size * 0.2); if (!inCutscene || cutsceneStep < 3 || cutsceneStep > 4) { let flameSize = kitty.size * map(abs(kitty.bobOffset), 0, kitty.size * 0.05, 0.3, 0.6) * random(0.8, 1.2); fill(255, random(150, 200), 0, 200); noStroke(); triangle(kitty.x - kitty.size * 0.2, kitty.y + kitty.size * 0.5, kitty.x - kitty.size * 0.2 - flameSize * 0.3, kitty.y + kitty.size * 0.5 + flameSize, kitty.x - kitty.size * 0.2 + flameSize * 0.3, kitty.y + kitty.size * 0.5 + flameSize); triangle(kitty.x + kitty.size * 0.2, kitty.y + kitty.size * 0.5, kitty.x + kitty.size * 0.2 - flameSize * 0.3, kitty.y + kitty.size * 0.5 + flameSize, kitty.x + kitty.size * 0.2 + flameSize * 0.3, kitty.y + kitty.size * 0.5 + flameSize); } } fill(kittyColor); stroke(50); strokeWeight(max(1, kitty.size * 0.05)); rectMode(CENTER); rect(kitty.x, kitty.y, kitty.size, kitty.size); let earSize = kitty.size * 0.4; let earOffset = kitty.size * 0.1; triangle(kitty.x - kitty.size/2 + earOffset, kitty.y - kitty.size/2, kitty.x - kitty.size/2 + earOffset, kitty.y - kitty.size/2 - earSize, kitty.x - earOffset, kitty.y - kitty.size/2); triangle(kitty.x + kitty.size/2 - earOffset, kitty.y - kitty.size/2, kitty.x + kitty.size/2 - earOffset, kitty.y - kitty.size/2 - earSize, kitty.x + earOffset, kitty.y - kitty.size/2); strokeWeight(max(2, kitty.size * 0.1)); line(kitty.x + kitty.size / 2, kitty.y, kitty.x + kitty.size * 0.8, kitty.y - kitty.size*0.2); let eyeSize = kitty.size * 0.1; fill(40); noStroke(); ellipse(kitty.x - kitty.size * 0.2, kitty.y - kitty.size * 0.1, eyeSize, eyeSize); ellipse(kitty.x + kitty.size * 0.2, kitty.y - kitty.size * 0.1, eyeSize, eyeSize); if (drawBow) { let bowSize = kitty.size * 0.3; fill(255, 100, 150); stroke(50); strokeWeight(1); let bowX = kitty.x; let bowY = kitty.y - kitty.size * 0.5; triangle(bowX - bowSize, bowY, bowX, bowY - bowSize * 0.4, bowX, bowY + bowSize * 0.4); triangle(bowX + bowSize, bowY, bowX, bowY - bowSize * 0.4, bowX, bowY + bowSize * 0.4); } rectMode(CORNER); noStroke(); }
+function drawKitty(inCutscene = false) { /* ... same w/ bow logic ... */ if(!kitty) return; let drawBow = false; if (typeof getEquippedItem === 'function') { if (getEquippedItem('kitty_accessory') === 'kitty_bow_pink') { drawBow = true; } } if (kitty.hasJetpack) { rectMode(CENTER); fill(jetpackColor); stroke(50); strokeWeight(max(1, kitty.size * 0.03)); rect(kitty.x, kitty.y + kitty.size * 0.1, kitty.size * 0.6, kitty.size * 0.7, kitty.size * 0.1); rect(kitty.x - kitty.size * 0.2, kitty.y + kitty.size * 0.4, kitty.size * 0.15, kitty.size * 0.2); rect(kitty.x + kitty.size * 0.2, kitty.y + kitty.size * 0.4, kitty.size * 0.15, kitty.size * 0.2); if (!inCutscene || cutsceneStep < 3 || cutsceneStep > 4) { let flameSize = kitty.size * map(abs(kitty.bobOffset), 0, kitty.size * 0.05, 0.3, 0.6) * random(0.8, 1.2); if (!(typeof getEquippedItem === 'function' && getEquippedItem('jetpack_fx') === 'jetpack_rainbow')){ fill(255, random(150, 200), 0, 200); noStroke(); triangle(kitty.x - kitty.size * 0.2, kitty.y + kitty.size * 0.5, kitty.x - kitty.size * 0.2 - flameSize * 0.3, kitty.y + kitty.size * 0.5 + flameSize, kitty.x - kitty.size * 0.2 + flameSize * 0.3, kitty.y + kitty.size * 0.5 + flameSize); triangle(kitty.x + kitty.size * 0.2, kitty.y + kitty.size * 0.5, kitty.x + kitty.size * 0.2 - flameSize * 0.3, kitty.y + kitty.size * 0.5 + flameSize, kitty.x + kitty.size * 0.2 + flameSize * 0.3, kitty.y + kitty.size * 0.5 + flameSize); } } } fill(kittyColor); stroke(50); strokeWeight(max(1, kitty.size * 0.05)); rectMode(CENTER); rect(kitty.x, kitty.y, kitty.size, kitty.size); let earSize = kitty.size * 0.4; let earOffset = kitty.size * 0.1; triangle(kitty.x - kitty.size/2 + earOffset, kitty.y - kitty.size/2, kitty.x - kitty.size/2 + earOffset, kitty.y - kitty.size/2 - earSize, kitty.x - earOffset, kitty.y - kitty.size/2); triangle(kitty.x + kitty.size/2 - earOffset, kitty.y - kitty.size/2, kitty.x + kitty.size/2 - earOffset, kitty.y - kitty.size/2 - earSize, kitty.x + earOffset, kitty.y - kitty.size/2); strokeWeight(max(2, kitty.size * 0.1)); line(kitty.x + kitty.size / 2, kitty.y, kitty.x + kitty.size * 0.8, kitty.y - kitty.size*0.2); let eyeSize = kitty.size * 0.1; fill(40); noStroke(); ellipse(kitty.x - kitty.size * 0.2, kitty.y - kitty.size * 0.1, eyeSize, eyeSize); ellipse(kitty.x + kitty.size * 0.2, kitty.y - kitty.size * 0.1, eyeSize, eyeSize); if (drawBow) { let bowSize = kitty.size * 0.3; fill(255, 100, 150); stroke(50); strokeWeight(1); let bowX = kitty.x; let bowY = kitty.y - kitty.size * 0.5; triangle(bowX - bowSize, bowY, bowX, bowY - bowSize * 0.4, bowX, bowY + bowSize * 0.4); triangle(bowX + bowSize, bowY, bowX, bowY - bowSize * 0.4, bowX, bowY + bowSize * 0.4); } rectMode(CORNER); noStroke(); }
+// updateAndDrawRainbowTrail (Moved to rainbow.js)
 function drawPlushie(p) { /* ... same ... */ fill(p.color); stroke(50); strokeWeight(max(1, p.size * 0.04)); rectMode(CENTER); rect(p.x, p.y, p.size, p.size); let eyeSize = p.size * 0.1; fill(40); ellipse(p.x - p.size * 0.2, p.y - p.size * 0.1, eyeSize, eyeSize); ellipse(p.x + p.size * 0.2, p.y - p.size * 0.1, eyeSize, eyeSize); rectMode(CORNER); noStroke(); }
 function checkCollision(player, obj) { /* ... same ... */ if(!player || !obj) return false; let kittyLeft = player.x - player.size / 2, kittyRight = player.x + player.size / 2; let kittyTop = player.y - player.size / 2, kittyBottom = player.y + player.size / 2; let plushieLeft = obj.x - obj.size / 2, plushieRight = obj.x + obj.size / 2; let plushieTop = obj.y - obj.size / 2, plushieBottom = obj.y + obj.size / 2; let noOverlap = kittyLeft > plushieRight || kittyRight < plushieLeft || kittyTop > plushieBottom || kittyBottom < plushieTop; return !noOverlap; }
 function isPointInKitty(px, py) { /* ... same ... */ if(!kitty) return false; let buffer = kitty.size * 0.5; let kittyLeft = kitty.x - kitty.size / 2 - buffer, kittyRight = kitty.x + kitty.size / 2 + buffer; let kittyTop = kitty.y - kitty.size / 2 - buffer, kittyBottom = kitty.y + kitty.size / 2 + buffer; return px >= kittyLeft && px <= kittyRight && py >= kittyTop && py <= kittyBottom; }
 
-// --- Input Handling --- (Checks Update Button Logic) ---
-function handlePressStart() {
-    if (!userHasInteracted) { /* ... audio start ... */ userHasInteracted = true; userStartAudio().then(() => { console.log("Audio context ready! Nyaa!"); audioStarted = true; }, (e) => { console.error("userStartAudio failed:", e); audioStarted = false; }); }
-
-    let pressX = mouseX; let pressY = mouseY;
-    try { if (touches.length > 0 && touches[0]) { pressX = touches[0].x; pressY = touches[0].y; } } catch(e) { console.warn("Error accessing touch data:", e); return; }
-
-    let endlessButtonDefined = (typeof endlessModeButton !== 'undefined' && endlessModeButton !== null);
-    let storeButtonDefined = (typeof storeButton !== 'undefined' && storeButton !== null);
-    let backButtonDefined = (typeof backButton !== 'undefined' && backButton !== null);
-    let updateButtonDefined = (typeof updateButton !== 'undefined' && updateButton !== null); // Check if update button exists
-
-    // --- Back Button Check ---
-    if (gameState === 'playing' && isEndlessMode && backButtonDefined) { if (pressX >= backButton.x && pressX <= backButton.x + backButton.w && pressY >= backButton.y && pressY <= backButton.y + backButton.h) { /* ... save, reset ... */ console.log("Back button pressed!"); if (highestStreakInSession > endlessHighScore) { endlessHighScore = highestStreakInSession; try { localStorage.setItem('kittyEndlessHighScore', endlessHighScore); console.log("New Endless High Score Saved:", endlessHighScore); } catch(e){ console.warn("Failed to save endless high score:", e); } } try { localStorage.setItem('kittyTotalPlushies', totalPlushiesCollected); } catch(e){ console.warn("Failed to save total plushies:", e); } gameState = 'start'; resetGame(); return; } }
-
-    // --- Start Screen Buttons ---
-    if (gameState === 'start') {
-        // Update Button Check FIRST
-        if (updateButtonDefined && pressX >= updateButton.x && pressX <= updateButton.x + updateButton.w && pressY >= updateButton.y && pressY <= updateButton.y + updateButton.h) {
-             if (updateButtonState === 'idle' || updateButtonState === 'uptodate' || updateButtonState === 'error') {
-                 // Trigger check only if not already checking or showing available
-                 checkVersion();
-             } else if (updateButtonState === 'available') {
-                 // If update is available, reload
-                 console.log("Reloading for update...");
-                 window.location.reload(true);
-             }
-             return; // Stop processing this tap
-        }
-        // Endless Button Check SECOND
-        if (endlessButtonDefined && pressX >= endlessModeButton.x && pressX <= endlessModeButton.x + endlessModeButton.w && pressY >= endlessModeButton.y && pressY <= endlessModeButton.y + endlessModeButton.h) { isEndlessMode = !isEndlessMode; console.log("Endless Mode Toggled:", isEndlessMode); return; }
-        // Store Button Check THIRD
-        if (storeButtonDefined && pressX >= storeButton.x && pressX <= storeButton.x + storeButton.w && pressY >= storeButton.y && pressY <= storeButton.y + storeButton.h) { console.log("Store button pressed! Entering store..."); gameState = 'store'; return; }
-    }
-
-    // Store Input
-    if (gameState === 'store') { /* ... same ... */ if (typeof handleStoreInput === 'function') { let purchaseCost = handleStoreInput(pressX, pressY, totalPlushiesCollected); if (typeof purchaseCost === 'number' && purchaseCost > 0) { totalPlushiesCollected -= purchaseCost; try { localStorage.setItem('kittyTotalPlushies', totalPlushiesCollected); } catch(e){ console.warn("Failed to save total plushies after purchase:", e); } } } else { console.warn("handleStoreInput function not found! Switching back to start."); gameState = 'start'; } return; }
-
-    // Game state logic (if not buttons/store)
-    if (gameState === 'intro') { /* ... same ... */ if (introStep < 12) { if (introStep === 1) { shakeTime = 15; } else if (introStep === 5) { kitty.hasJetpack = true; } else { shakeTime = 0; } introStep++; } else { gameState = 'start'; } }
-    else if (gameState === 'start') { kitty.hasJetpack = true; resetGame(); gameState = 'playing'; }
-    else if (gameState === 'gameOverCutscene') { /* ... same ... */ if (cutsceneStep < 6) { if (cutsceneStep === 2) { shakeTime = 15; } else if (cutsceneStep === 3) { shakeTime = 15;} else { shakeTime = 0; } cutsceneStep++; } else { gameState = 'gameOver'; } }
-    else if (gameState === 'gameOver') { gameState = 'start'; }
-    else if (gameState === 'playing') { /* ... drag check ... */ if (pressX !== undefined && kitty && isPointInKitty(pressX, pressY)) { isDragging = true; } }
-}
-
-// --- NEW Version Check Function ---
-function checkVersion() {
-    if (updateButtonState === 'checking') return; // Prevent multiple checks
-
-    console.log("Checking for updates...");
-    updateButtonState = 'checking';
-    updateButtonText = "Checking...";
-    clearTimeout(updateCheckTimeout); // Clear any previous reset timer
-
-    // Construct the URL to your version.json file on GitHub Pages
-    // Assumes version.json is in the same directory as index.html
-    // You might need to adjust this path if your structure is different!
-    const versionUrl = 'version.json';
-
-    fetch(versionUrl + '?t=' + Date.now()) // Add timestamp to try and bypass cache
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data && data.version) {
-                console.log(`Current Version: ${gameVersion}, Latest Version: ${data.version}`);
-                if (data.version !== gameVersion) {
-                    console.log("Update Available!");
-                    updateButtonState = 'available';
-                    updateButtonText = "Update Found!"; // Or "Reload to Update"
-                } else {
-                    console.log("Game is up to date! Nya~!");
-                    updateButtonState = 'uptodate';
-                    updateButtonText = "Up to Date! ♡";
-                    // Set timeout to reset button text after a few seconds
-                    updateCheckTimeout = setTimeout(() => {
-                        updateButtonState = 'idle';
-                        updateButtonText = "Check Updates";
-                    }, 3000); // Reset after 3 seconds
-                }
-            } else {
-                throw new Error("Invalid version data received.");
-            }
-        })
-        .catch(error => {
-            console.error("Error checking version:", error);
-            updateButtonState = 'error';
-            updateButtonText = "Check Failed :(";
-             // Set timeout to reset button text after error
-            updateCheckTimeout = setTimeout(() => {
-                updateButtonState = 'idle';
-                updateButtonText = "Check Updates";
-            }, 5000); // Reset after 5 seconds
-        });
-}
-
-
+// --- Input Handling --- (No changes needed here)
+function handlePressStart() { /* ... same ... */ if (!userHasInteracted) { userHasInteracted = true; userStartAudio().then(() => { console.log("Audio context ready! Nyaa!"); audioStarted = true; }, (e) => { console.error("userStartAudio failed:", e); audioStarted = false; }); } let pressX = mouseX; let pressY = mouseY; try { if (touches.length > 0 && touches[0]) { pressX = touches[0].x; pressY = touches[0].y; } } catch(e) { console.warn("Error accessing touch data:", e); return; } let endlessButtonDefined = (typeof endlessModeButton !== 'undefined' && endlessModeButton !== null); let storeButtonDefined = (typeof storeButton !== 'undefined' && storeButton !== null); let backButtonDefined = (typeof backButton !== 'undefined' && backButton !== null); let updateButtonDefined = (typeof updateButton !== 'undefined' && updateButton !== null); if (gameState === 'playing' && isEndlessMode && backButtonDefined) { if (pressX >= backButton.x && pressX <= backButton.x + backButton.w && pressY >= backButton.y && pressY <= backButton.y + backButton.h) { console.log("Back button pressed!"); if (highestStreakInSession > endlessHighScore) { endlessHighScore = highestStreakInSession; try { localStorage.setItem('kittyEndlessHighScore', endlessHighScore); console.log("New Endless High Score Saved:", endlessHighScore); } catch(e){ console.warn("Failed to save endless high score:", e); } } try { localStorage.setItem('kittyTotalPlushies', totalPlushiesCollected); } catch(e){ console.warn("Failed to save total plushies:", e); } gameState = 'start'; resetGame(); return; } } if (gameState === 'start') { if (updateButtonDefined && pressX >= updateButton.x && pressX <= updateButton.x + updateButton.w && pressY >= updateButton.y && pressY <= updateButton.y + updateButton.h) { if (updateButtonState === 'idle' || updateButtonState === 'uptodate' || updateButtonState === 'error') { checkVersion(); } else if (updateButtonState === 'available') { console.log("Reloading for update..."); window.location.reload(true); } return; } if (endlessButtonDefined && pressX >= endlessModeButton.x && pressX <= endlessModeButton.x + endlessModeButton.w && pressY >= endlessModeButton.y && pressY <= endlessModeButton.y + endlessModeButton.h) { isEndlessMode = !isEndlessMode; console.log("Endless Mode Toggled:", isEndlessMode); return; } if (storeButtonDefined && pressX >= storeButton.x && pressX <= storeButton.x + storeButton.w && pressY >= storeButton.y && pressY <= storeButton.y + storeButton.h) { console.log("Store button pressed! Entering store..."); gameState = 'store'; return; } } if (gameState === 'store') { if (typeof handleStoreInput === 'function') { let purchaseCost = handleStoreInput(pressX, pressY, totalPlushiesCollected); if (typeof purchaseCost === 'number' && purchaseCost > 0) { totalPlushiesCollected -= purchaseCost; try { localStorage.setItem('kittyTotalPlushies', totalPlushiesCollected); } catch(e){ console.warn("Failed to save total plushies after purchase:", e); } } } else { console.warn("handleStoreInput function not found! Switching back to start."); gameState = 'start'; } return; } if (gameState === 'intro') { if (introStep < 12) { if (introStep === 1) { shakeTime = 15; } else if (introStep === 5) { kitty.hasJetpack = true; } else { shakeTime = 0; } introStep++; } else { gameState = 'start'; } } else if (gameState === 'start') { kitty.hasJetpack = true; resetGame(); gameState = 'playing'; } else if (gameState === 'gameOverCutscene') { if (cutsceneStep < 6) { if (cutsceneStep === 2) { shakeTime = 15; } else if (cutsceneStep === 3) { shakeTime = 15;} else { shakeTime = 0; } cutsceneStep++; } else { gameState = 'gameOver'; } } else if (gameState === 'gameOver') { gameState = 'start'; } else if (gameState === 'playing') { if (pressX !== undefined && kitty && isPointInKitty(pressX, pressY)) { isDragging = true; } } }
+// --- Version Check Function ---
+function checkVersion() { /* ... same ... */ if (updateButtonState === 'checking') return; console.log("Checking for updates..."); updateButtonState = 'checking'; updateButtonText = "Checking..."; clearTimeout(updateCheckTimeout); const versionUrl = 'version.json'; fetch(versionUrl + '?t=' + Date.now()).then(response => { if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); } return response.json(); }).then(data => { if (data && data.version) { console.log(`Current Version: ${gameVersion}, Latest Version: ${data.version}`); if (data.version !== gameVersion) { console.log("Update Available!"); updateButtonState = 'available'; updateButtonText = "Update Found!"; } else { console.log("Game is up to date! Nya~!"); updateButtonState = 'uptodate'; updateButtonText = "Up to Date! ♡"; updateCheckTimeout = setTimeout(() => { updateButtonState = 'idle'; updateButtonText = "Check Updates"; }, 3000); } } else { throw new Error("Invalid version data received."); } }).catch(error => { console.error("Error checking version:", error); updateButtonState = 'error'; updateButtonText = "Check Failed :("; updateCheckTimeout = setTimeout(() => { updateButtonState = 'idle'; updateButtonText = "Check Updates"; }, 5000); }); }
 // Standard p5 mouse/touch listeners
 function mousePressed() { handlePressStart(); if (mouseX > 0 && mouseX < width && mouseY > 0 && mouseY < height) { return false; } }
 function touchStarted() { handlePressStart(); if (touches.length > 0 && touches[0] && touches[0].x > 0 && touches[0].x < width && touches[0].y > 0 && touches[0].y < height) { return false; } }
